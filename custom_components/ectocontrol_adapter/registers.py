@@ -380,6 +380,33 @@ REGISTERS_R = {
     }
 }
 
+# Contact Splitter Input Registers (function code 0x04)
+# Per MODBUS_PROTOCOL_RU.md section 3.2 - contact states are INPUT registers
+REG_R_CONTACT_CHANNELS_1_8 = 0x0010   # Channels 1-8 bitfield (bits 0-7)
+REG_R_CONTACT_CHANNELS_9_10 = 0x0011  # Channels 9-10 bitfield (bits 0-1)
+
+REGISTERS_INPUT = {
+    REG_R_CONTACT_CHANNELS_1_8: {
+        "name": "contact_channels_1_8",
+        "count": 1,
+        "data_type": "uint16",
+        "input_type": "input",  # INPUT register (function code 0x04)
+        "scan_interval": 5,
+        "category": EntityCategory.DIAGNOSTIC,
+    },
+    REG_R_CONTACT_CHANNELS_9_10: {
+        "name": "contact_channels_9_10",
+        "count": 1,
+        "data_type": "uint16",
+        "input_type": "input",  # INPUT register (function code 0x04)
+        "scan_interval": 5,
+        "category": EntityCategory.DIAGNOSTIC,
+    }
+}
+
+# Merge input registers into REGISTERS_R for coordinator access
+REGISTERS_R.update(REGISTERS_INPUT)
+
 # Input types
 BUTTON_INPUT = "button"
 NUMBER_INPUT = "number"
@@ -591,10 +618,13 @@ DEVICE_TYPE_DEFS = {
     DEVICE_TYPE_CONTACT_SPLITTER: {
         "name": "Contact Sensor Splitter",
         "read_registers": {
-            # Contact splitter specific registers only
-            REG_R_ADAPTER_STATUS: REGISTERS_R[REG_R_ADAPTER_STATUS],
-            REG_R_ADAPTER_VERSION: REGISTERS_R[REG_R_ADAPTER_VERSION],
-            REG_R_ADAPTER_UPTIME: REGISTERS_R[REG_R_ADAPTER_UPTIME],
+            # Contact splitter uses INPUT registers (function code 0x04)
+            # Per MODBUS_PROTOCOL_RU.md section 3.2
+            # Register 0x0010: Channels 1-8 bitfield
+            # Register 0x0011: Channels 9-10 bitfield
+            # Note: Contact Splitter does NOT have adapter_status/version/uptime
+            REG_R_CONTACT_CHANNELS_1_8: REGISTERS_R[REG_R_CONTACT_CHANNELS_1_8],
+            REG_R_CONTACT_CHANNELS_9_10: REGISTERS_R[REG_R_CONTACT_CHANNELS_9_10],
         },
         "write_registers": {},
     },

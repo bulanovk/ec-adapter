@@ -41,11 +41,21 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
         data = {}
         try:
             for register in self._registers:
-                result = await self._master.read_holding_registers(
-                    address=register,
-                    count=REGISTERS_R[register]["count"])
+                reg_config = REGISTERS_R[register]
+                input_type = reg_config.get("input_type", "holding")
+
+                # Choose read method based on input_type
+                if input_type == "input":
+                    result = await self._master.read_input_registers(
+                        address=register,
+                        count=reg_config["count"])
+                else:
+                    result = await self._master.read_holding_registers(
+                        address=register,
+                        count=reg_config["count"])
+
                 if result is None or result.isError():
-                    _LOGGER.error("Modbus read error")
+                    _LOGGER.error("Modbus read error for register 0x%04X", register)
                     data[register] = None
                 else:
                     data[register] = result.registers

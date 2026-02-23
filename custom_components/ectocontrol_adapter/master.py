@@ -105,6 +105,13 @@ class ModbusMasterCoordinator:
             {"address": address, "count": count, "device_id": self._slave_id}
         )
 
+    async def read_input_registers(self, address: int, count: int) -> Any:
+        """Read input registers from the device (function code 0x04)."""
+        return await self._pooled_client.submit_operation(
+            "read_input_registers",
+            {"address": address, "count": count, "device_id": self._slave_id}
+        )
+
     async def write_registers(
         self,
         address: int,
