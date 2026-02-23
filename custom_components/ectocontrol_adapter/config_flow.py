@@ -19,6 +19,7 @@ import voluptuous as vol
 
 from .const import *  # noqa F403
 from .helpers import create_modbus_client
+from .pool import _get_pool_key, POOL_KEY, ModbusClientPool
 
 # Generic register for connectivity validation (exists on all device types)
 REG_DEVICE_DESCRIPTOR = 0x0003  # MSB: device type, LSB: channel count
@@ -77,42 +78,93 @@ async def create_schema(hass, config_entry=None, user_input=None, type="init"):
         })
 
 
-async def check_user_input(user_input):
+async def check_user_input(user_input, pool: ModbusClientPool = None):
+    """
+    Validate connection to Modbus device.
+
+    Uses existing pooled connection if available, otherwise creates a temporary client.
+    """
     errors = {}
-    client = create_modbus_client(user_input)
-    try:
-        result = await client.connect()
-        if not result:
-            errors["base"] = "ec_modbus_connect_error"
-            _LOGGER.error("Failed to connect to Modbus device")
-        else:
-            _LOGGER.info("Successfully connected to Modbus device")
+    pool_key = _get_pool_key(user_input)
+    slave_id = int(user_input[OPT_SLAVE])
 
-            # Read generic device descriptor register to validate connectivity
-            # This register exists on all ectoControl device types
-            device_info = await client.read_holding_registers(
-                address=REG_DEVICE_DESCRIPTOR,
-                count=1,
-                device_id=int(user_input[OPT_SLAVE])
-            )
+    # Check if we can reuse an existing pooled connection
+    pooled_client = pool.get(pool_key) if pool else None
 
-            if device_info is None or device_info.isError():
+    if pooled_client:
+        # Use existing pooled connection (port already locked by pool)
+        _LOGGER.debug("Using pooled connection for validation: %s", pool_key)
+        try:
+            if not pooled_client.is_connected:
                 errors["base"] = "ec_modbus_connect_error"
-                _LOGGER.error("Modbus error reading device descriptor: %s", device_info)
+                _LOGGER.error("Pooled client is not connected")
             else:
-                device_type = (device_info.registers[0] >> 8) & 0xFF
-                channel_count = device_info.registers[0] & 0xFF
-                _LOGGER.info(
-                    "Device detected: type=0x%02X (%s), channels=%d",
-                    device_type,
-                    DEVICE_TYPE_NAMES.get(device_type, "Unknown"),
-                    channel_count
+                # Read device descriptor to validate connectivity
+                device_info = await pooled_client.submit_operation(
+                    "read_holding_registers",
+                    {"address": REG_DEVICE_DESCRIPTOR, "count": 1, "device_id": slave_id}
                 )
 
-    except Exception as e:
-        errors["base"] = "ec_modbus_connect_error"
-        _LOGGER.error("Failed to connect to Modbus device: %s" % e)
+                if device_info is None or device_info.isError():
+                    errors["base"] = "ec_modbus_connect_error"
+                    _LOGGER.error("Modbus error reading device descriptor: %s", device_info)
+                else:
+                    device_type = (device_info.registers[0] >> 8) & 0xFF
+                    channel_count = device_info.registers[0] & 0xFF
+                    _LOGGER.info(
+                        "Device detected: type=0x%02X (%s), channels=%d",
+                        device_type,
+                        DEVICE_TYPE_NAMES.get(device_type, "Unknown"),
+                        channel_count
+                    )
+        except Exception as e:
+            errors["base"] = "ec_modbus_connect_error"
+            _LOGGER.error("Failed to validate using pooled connection: %s", e)
+    else:
+        # No pooled connection - create temporary client
+        _LOGGER.debug("Creating temporary client for validation: %s", pool_key)
+        client = create_modbus_client(user_input)
+        try:
+            result = await client.connect()
+            if not result:
+                errors["base"] = "ec_modbus_connect_error"
+                _LOGGER.error("Failed to connect to Modbus device")
+            else:
+                _LOGGER.info("Successfully connected to Modbus device")
+
+                # Read generic device descriptor register to validate connectivity
+                device_info = await client.read_holding_registers(
+                    address=REG_DEVICE_DESCRIPTOR,
+                    count=1,
+                    device_id=slave_id
+                )
+
+                if device_info is None or device_info.isError():
+                    errors["base"] = "ec_modbus_connect_error"
+                    _LOGGER.error("Modbus error reading device descriptor: %s", device_info)
+                else:
+                    device_type = (device_info.registers[0] >> 8) & 0xFF
+                    channel_count = device_info.registers[0] & 0xFF
+                    _LOGGER.info(
+                        "Device detected: type=0x%02X (%s), channels=%d",
+                        device_type,
+                        DEVICE_TYPE_NAMES.get(device_type, "Unknown"),
+                        channel_count
+                    )
+
+        except Exception as e:
+            errors["base"] = "ec_modbus_connect_error"
+            _LOGGER.error("Failed to connect to Modbus device: %s", e)
+        finally:
+            client.close()
+
     return errors
+
+
+def _get_pool(hass) -> ModbusClientPool:
+    """Get the ModbusClientPool from hass.data."""
+    from .const import DOMAIN
+    return hass.data.get(DOMAIN, {}).get(POOL_KEY)
 
 
 class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -151,7 +203,8 @@ class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             self.config_data.update(user_input)
-            errors = await check_user_input(self.config_data)
+            pool = _get_pool(self.hass)
+            errors = await check_user_input(self.config_data, pool)
             if not errors:
                 return self.async_create_entry(
                     title=self.config_data[OPT_NAME],
@@ -215,7 +268,8 @@ class ECAdapterOptionsFlow(config_entries.OptionsFlow):
         errors = {}
         if user_input is not None:
             self.config_data.update(user_input)
-            errors = await check_user_input(self.config_data)
+            pool = _get_pool(self.hass)
+            errors = await check_user_input(self.config_data, pool)
             if not errors:
                 # Update configuration
                 self.hass.config_entries.async_update_entry(

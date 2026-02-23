@@ -9,6 +9,7 @@ from homeassistant.helpers import device_registry as dr
 from .const import DOMAIN, OPT_NAME, DEVICE_TYPE_NAMES
 from .coordinator import ModbusDataUpdateCoordinator
 from .master import ModbusMasterCoordinator
+from .pool import ModbusClientPool, POOL_KEY
 from .registers import (
     REGISTERS_R,
     REGISTERS_W,
@@ -28,25 +29,38 @@ _PLATFORMS = [
 ]
 
 
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the ectoControl Adapter integration."""
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN][POOL_KEY] = ModbusClientPool()
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """ Set up sensors from a config entry. """
-    hass.data.setdefault(DOMAIN, {})
+    config = config_entry.options or config_entry.data
 
     # Create device
     device_registry = dr.async_get(hass)
     device = device_registry.async_get_or_create(
         config_entry_id=config_entry.entry_id,
         identifiers={(DOMAIN, config_entry.entry_id)},
-        name=config_entry.options.get(OPT_NAME) or config_entry.data.get(OPT_NAME),
+        name=config.get(OPT_NAME) or config_entry.data.get(OPT_NAME),
         manufacturer="ectoControl"
     )
 
-    # Create and start Modbus master coordinator
+    # Acquire a pooled client connection
+    pool: ModbusClientPool = hass.data[DOMAIN][POOL_KEY]
+    pool_key, pooled_client = await pool.acquire(config)
+
+    # Create master coordinator with pooled client
     master_coordinator = ModbusMasterCoordinator(
         hass=hass,
-        config_entry=config_entry
+        config_entry=config_entry,
+        pool=pool,
+        pool_key=pool_key,
+        pooled_client=pooled_client
     )
-    await master_coordinator.async_start()
 
     # Detect device type
     device_info = await master_coordinator.detect_device_type()
@@ -105,7 +119,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         "device_id": device.id,
         "update_coordinators": update_coordinators,
         "update_register_groups": update_register_groups,
-        "write_registers": write_regs
+        "write_registers": write_regs,
+        "pool_key": pool_key
     }
 
     # Set up sensors
@@ -123,7 +138,12 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     """ Unload a config entry. """
     await hass.config_entries.async_unload_platforms(config_entry, _PLATFORMS)
 
-    master_coordinator = hass.data[DOMAIN][config_entry.entry_id]["master_coordinator"]
-    await master_coordinator.async_stop()
+    entry_data = hass.data[DOMAIN][config_entry.entry_id]
+    pool_key = entry_data.get("pool_key")
+
+    # Release the pooled client
+    if pool_key:
+        pool: ModbusClientPool = hass.data[DOMAIN][POOL_KEY]
+        await pool.release(pool_key)
 
     return True

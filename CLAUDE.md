@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation
+
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System architecture and design
+- **[docs/PROTOCOL.md](docs/PROTOCOL.md)** - Modbus protocol and register definitions
+- **[docs/README.md](docs/README.md)** - Documentation index
+
 ## Project Overview
 
 This is a Home Assistant custom component that integrates ectoControl adapters for controlling gas and electric boilers via Modbus (TCP, UDP, Serial, RTU-over-TCP protocols). The integration supports eBUS, OpenTherm, and Navien boiler protocols.
@@ -10,16 +16,62 @@ This is a Home Assistant custom component that integrates ectoControl adapters f
 
 **External dependency:** pymodbus==3.11.2
 
+## File Structure
+
+| File | Purpose |
+|------|---------|
+| `__init__.py` | Integration setup, pool initialization, entry lifecycle |
+| `pool.py` | Connection pooling with reference counting |
+| `master.py` | ModbusMasterCoordinator - delegates to pooled client |
+| `coordinator.py` | ModbusDataUpdateCoordinator - polls registers |
+| `config_flow.py` | UI configuration flow with pool-aware validation |
+| `registers.py` | Register definitions and device type configurations |
+| `const.py` | Constants and configuration options |
+| `helpers.py` | Modbus client factory |
+| `converters.py` | Data transformation functions |
+| `sensor.py` | Sensor entity generation |
+| `binary_sensor.py` | Binary sensor entity generation |
+| `number.py` | Number input entity generation |
+| `select.py` | Select dropdown entity generation |
+| `switch.py` | Switch entity generation |
+| `button.py` | Button entity generation |
+
 ## Architecture
+
+### Connection Pooling
+
+The integration uses a connection pooling system to allow multiple devices to share the same serial port or network connection:
+
+1. **ModbusClientPool** (`pool.py`) - Singleton that manages shared connections keyed by connection configuration (e.g., `serial:/dev/pts/3:9600:N:1:8` or `tcp:192.168.1.100:502`)
+2. **PooledClient** (`pool.py`) - Holds the actual Modbus client, async operation queue, and reference count. Serializes all Modbus operations to prevent concurrent access issues.
+
+**Key concepts:**
+- Multiple config entries with the same connection settings share one `PooledClient`
+- Each `PooledClient` has a reference count - connects on first acquire, disconnects on last release
+- All operations are serialized through an async queue within each `PooledClient`
+- Different slave IDs are distinguished via the `device_id` parameter in each Modbus request
+- Config flow reuses existing pooled connections for validation (no port lock conflicts)
+
+```
+Entry 1 (slave 1) ─┐
+Entry 2 (slave 2) ─┼──► PooledClient ──► Single Serial Port Lock
+Entry 3 (slave 3) ─┘         │
+                             ▼
+                    Operation Queue (serialized)
+                             │
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+         device_id=1    device_id=2    device_id=3
+```
 
 ### Dual Coordinator Pattern
 
 The integration uses a two-tier coordinator architecture:
 
-1. **ModbusMasterCoordinator** (`master.py`) - Singleton that manages the Modbus connection and serializes all Modbus operations through an async queue. Prevents concurrent access issues.
+1. **ModbusMasterCoordinator** (`master.py`) - Wrapper that delegates Modbus operations to a `PooledClient`. Each config entry has its own instance, but they share the underlying pooled connection.
 2. **ModbusDataUpdateCoordinator** (`coordinator.py`) - Multiple instances, one per scan interval group. Polls read registers and caches data for sensor entities.
 
-Key implication: All read operations go through data coordinators, while write operations go directly through the master coordinator.
+Key implication: All read operations go through data coordinators, while write operations go directly through the master coordinator. All operations are serialized through the shared `PooledClient` queue.
 
 ### Entity Generation Pattern
 
@@ -53,9 +105,41 @@ Register configurations are filtered based on the detected device type using `DE
 
 Write operations verify success by polling a status register (offset by `REG_STATUS_OFFSET` from the write address). The master coordinator retries reads up to `REG_DEFAULT_MAX_RETRIES` times with `REG_DEFAULT_RETRY_DELAY` delay.
 
+### Pool Key Generation
+
+Pool keys uniquely identify connections for sharing:
+
+| Connection Type | Pool Key Format |
+|-----------------|-----------------|
+| Serial | `serial:{device}:{baudrate}:{parity}:{stopbits}:{bytesize}` |
+| TCP | `tcp:{host}:{port}` |
+| UDP | `udp:{host}:{port}` |
+| RTU-over-TCP | `rtuovertcp:{host}:{port}` |
+
+Example: `serial:/dev/pts/3:9600:N:1:8`
+
+### Reference Counting Lifecycle
+
+```
+async_setup_entry()     → pool.acquire()  → ref_count++ (connect if first)
+                                              ↓
+                                        [Device Operating]
+                                              ↓
+async_unload_entry()    → pool.release()  → ref_count-- (disconnect if last)
+```
+
 ### Auto-Write on Reconnect
 
 Some number entities have `write_after_connected` configuration that causes them to automatically write their value when the adapter connectivity binary sensor turns on. This ensures boiler parameters are restored after reconnection.
+
+### Config Flow Validation
+
+The config flow validates device connectivity before creating an entry:
+
+1. **First device on a port**: Creates a temporary client, validates, then closes it
+2. **Subsequent devices on same port**: Reuses existing pooled connection for validation
+
+This prevents port lock conflicts when adding multiple devices on the same serial port.
 
 ## Register Configuration Reference
 
