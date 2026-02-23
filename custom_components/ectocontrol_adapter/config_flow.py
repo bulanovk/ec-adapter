@@ -19,7 +19,9 @@ import voluptuous as vol
 
 from .const import *  # noqa F403
 from .helpers import create_modbus_client
-from .registers import REGISTERS_R, REG_R_ADAPTER_UPTIME
+
+# Generic register for connectivity validation (exists on all device types)
+REG_DEVICE_DESCRIPTOR = 0x0003  # MSB: device type, LSB: channel count
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -86,18 +88,26 @@ async def check_user_input(user_input):
         else:
             _LOGGER.info("Successfully connected to Modbus device")
 
-            adapter_uptime = await client.read_holding_registers(
-                address=REG_R_ADAPTER_UPTIME,
-                count=REGISTERS_R[REG_R_ADAPTER_UPTIME]["count"],
+            # Read generic device descriptor register to validate connectivity
+            # This register exists on all ectoControl device types
+            device_info = await client.read_holding_registers(
+                address=REG_DEVICE_DESCRIPTOR,
+                count=1,
                 device_id=int(user_input[OPT_SLAVE])
             )
 
-            if adapter_uptime is None or adapter_uptime.isError():
-                errors["base"] = "ec_uptime_reading_error"
-                _LOGGER.error(
-                    "Modbus error reading uptime from adapter: %s", adapter_uptime)
+            if device_info is None or device_info.isError():
+                errors["base"] = "ec_modbus_connect_error"
+                _LOGGER.error("Modbus error reading device descriptor: %s", device_info)
             else:
-                _LOGGER.info("Modbus reading uptime value: %s" % adapter_uptime.registers)
+                device_type = (device_info.registers[0] >> 8) & 0xFF
+                channel_count = device_info.registers[0] & 0xFF
+                _LOGGER.info(
+                    "Device detected: type=0x%02X (%s), channels=%d",
+                    device_type,
+                    DEVICE_TYPE_NAMES.get(device_type, "Unknown"),
+                    channel_count
+                )
 
     except Exception as e:
         errors["base"] = "ec_modbus_connect_error"
