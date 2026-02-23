@@ -91,6 +91,7 @@ REG_W_DHW_MAX_TEMP = 0x0036
 REG_W_DHW_TEMP = 0x0037
 REG_W_BURNER_MODULATION = 0x0038
 REG_W_MODE = 0x0039
+REG_W_CIRCUIT_ENABLE = 0x003A
 
 # Command registers
 REG_W_COMMAND = 0x0080
@@ -384,6 +385,7 @@ BUTTON_INPUT = "button"
 NUMBER_INPUT = "number"
 SWITCH_INPUT = "switch"
 SELECT_INPUT = "select"
+BITMASK_SWITCH_INPUT = "bitmask_switch"
 
 REGISTERS_W = {
     # Switch
@@ -520,6 +522,28 @@ REGISTERS_W = {
             "heating_second": 0b101
         }
     },
+    # Bitmask switch - multiple switches from one register
+    REG_W_CIRCUIT_ENABLE: {
+        "name": "circuit_enable",
+        "input_type": BITMASK_SWITCH_INPUT,
+        "bit_switches": [
+            {
+                "bit": 0,
+                "name": "heating_enable",
+                "icon": "mdi:heating-coil",
+            },
+            {
+                "bit": 1,
+                "name": "dhw_enable",
+                "icon": "mdi:water-pump",
+            },
+            {
+                "bit": 2,
+                "name": "second_circuit_enable",
+                "icon": "mdi:heating-coil",
+            },
+        ]
+    },
     REG_W_COMMAND: {
         "name": "command",
         "input_type": BUTTON_INPUT,
@@ -539,4 +563,40 @@ REGISTERS_W = {
             }
         ]
     }
+}
+
+# Import device type constants from const.py
+from .const import (
+    DEVICE_TYPE_OPENTHERM_V2,
+    DEVICE_TYPE_EBUS,
+    DEVICE_TYPE_CONTACT_SPLITTER,
+    DEVICE_TYPE_TEMP_SENSOR,
+    DEVICE_TYPE_HUMIDITY_SENSOR,
+    DEVICE_TYPE_CONTACT_SENSOR,
+    DEVICE_TYPE_NAVIEN,
+)
+
+# Device type definitions
+DEVICE_TYPE_DEFS = {
+    DEVICE_TYPE_OPENTHERM_V2: {
+        "name": "OpenTherm Adapter v2",
+        "read_registers": REGISTERS_R,  # Uses all default registers
+        "write_registers": REGISTERS_W,
+    },
+    DEVICE_TYPE_EBUS: {
+        "name": "eBus Adapter",
+        "read_registers": REGISTERS_R,
+        "write_registers": REGISTERS_W,
+    },
+    DEVICE_TYPE_CONTACT_SPLITTER: {
+        "name": "Contact Sensor Splitter",
+        "read_registers": {
+            # Contact splitter specific registers only
+            REG_R_ADAPTER_STATUS: REGISTERS_R[REG_R_ADAPTER_STATUS],
+            REG_R_ADAPTER_VERSION: REGISTERS_R[REG_R_ADAPTER_VERSION],
+            REG_R_ADAPTER_UPTIME: REGISTERS_R[REG_R_ADAPTER_UPTIME],
+        },
+        "write_registers": {},
+    },
+    # Add more device types as needed
 }

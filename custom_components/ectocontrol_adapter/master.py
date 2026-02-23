@@ -2,7 +2,13 @@ import asyncio
 import logging
 from typing import Any, Dict, List
 
-from .const import OPT_SLAVE, QUEUE_TIMEOUT
+from .const import (
+    OPT_SLAVE,
+    QUEUE_TIMEOUT,
+    REG_DEVICE_UID,
+    REG_DEVICE_TYPE_CHANNELS,
+    DEVICE_TYPE_NAMES,
+)
 from .helpers import create_modbus_client
 from .registers import (
     REG_DEFAULT_MAX_RETRIES,
@@ -157,6 +163,79 @@ class ModbusMasterCoordinator:
                 await asyncio.sleep(retry_delay)
 
         return False
+
+    async def detect_device_type(self) -> dict:
+        """Detect device type by reading generic device info registers.
+
+        Returns:
+            dict with keys: 'device_type', 'device_uid', 'channel_count'
+            or None if detection fails
+        """
+        client = await self._get_modbus_client()
+
+        # Read registers 0x0000-0x0003 (generic device info)
+        result = await client.read_holding_registers(
+            address=0x0000,
+            count=4,
+            device_id=int(self._config[OPT_SLAVE])
+        )
+
+        if result is None or result.isError() or len(result.registers) < 4:
+            _LOGGER.error("Failed to read device info registers")
+            return None
+
+        regs = result.registers
+
+        # Extract UID (24-bit from registers 0x0001-0x0002)
+        uid_msb = regs[1] >> 8
+        uid_mid = regs[1] & 0xFF
+        uid_lsb = regs[2] >> 8
+        device_uid = (uid_msb << 16) | (uid_mid << 8) | uid_lsb
+
+        # Extract device type (MSB of register 0x0003)
+        device_type = (regs[3] >> 8) & 0xFF
+        channel_count = regs[3] & 0xFF
+
+        _LOGGER.info(
+            "Device detected: type=0x%02X (%s), UID=0x%06X, channels=%d",
+            device_type,
+            DEVICE_TYPE_NAMES.get(device_type, "Unknown"),
+            device_uid,
+            channel_count
+        )
+
+        return {
+            "device_type": device_type,
+            "device_uid": device_uid,
+            "channel_count": channel_count
+        }
+
+    async def write_register_bit(self, address: int, bit: int, value: bool) -> bool:
+        """Write a single bit in a register using read-modify-write.
+
+        Args:
+            address: Register address
+            bit: Bit position (0-15)
+            value: True to set bit, False to clear bit
+
+        Returns:
+            True if successful, False otherwise
+        """
+        # Read current value
+        result = await self.read_holding_registers(address, 1)
+        if result is None or result.isError():
+            return False
+
+        current = result.registers[0]
+
+        # Modify the bit
+        if value:
+            new_value = current | (1 << bit)
+        else:
+            new_value = current & ~(1 << bit)
+
+        # Write back
+        return await self.write_registers(address, [new_value])
 
     async def read_holding_registers(self, address: int, count: int) -> Any:
         return await self._submit_operation(
