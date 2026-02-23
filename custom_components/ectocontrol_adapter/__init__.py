@@ -6,10 +6,15 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
-from .const import DOMAIN, OPT_NAME
+from .const import DOMAIN, OPT_NAME, DEVICE_TYPE_NAMES
 from .coordinator import ModbusDataUpdateCoordinator
 from .master import ModbusMasterCoordinator
-from .registers import REGISTERS_R, REGISTERS_W, REG_DEFAULT_SCAN_INTERVAL
+from .registers import (
+    REGISTERS_R,
+    REGISTERS_W,
+    REG_DEFAULT_SCAN_INTERVAL,
+    DEVICE_TYPE_DEFS
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,9 +48,38 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     )
     await master_coordinator.async_start()
 
+    # Detect device type
+    device_info = await master_coordinator.detect_device_type()
+    if device_info:
+        device_type = device_info["device_type"]
+        _LOGGER.info(
+            "Detected device type: 0x%02X (%s)",
+            device_type,
+            DEVICE_TYPE_NAMES.get(device_type, "Unknown")
+        )
+
+        # Get register configuration for this device type
+        device_def = DEVICE_TYPE_DEFS.get(device_type)
+        if device_def:
+            read_regs = device_def.get("read_registers", REGISTERS_R)
+            write_regs = device_def.get("write_registers", REGISTERS_W)
+        else:
+            # Fallback to default registers
+            _LOGGER.warning(
+                "Unknown device type 0x%02X, using default register configuration",
+                device_type
+            )
+            read_regs = REGISTERS_R
+            write_regs = REGISTERS_W
+    else:
+        # Fallback to default registers if detection fails
+        _LOGGER.warning("Device type detection failed, using default register configuration")
+        read_regs = REGISTERS_R
+        write_regs = REGISTERS_W
+
     # Group registers by scan interval
     update_register_groups = {}
-    for register_addr, config in REGISTERS_R.items():
+    for register_addr, config in read_regs.items():
         scan_interval = config.get("scan_interval", REG_DEFAULT_SCAN_INTERVAL)
         if scan_interval not in update_register_groups:
             update_register_groups[scan_interval] = []
@@ -71,7 +105,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         "device_id": device.id,
         "update_coordinators": update_coordinators,
         "update_register_groups": update_register_groups,
-        "write_registers": REGISTERS_W
+        "write_registers": write_regs
     }
 
     # Set up sensors
