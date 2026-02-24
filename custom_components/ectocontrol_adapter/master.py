@@ -95,8 +95,8 @@ class ModbusMasterCoordinator:
         else:
             new_value = current & ~(1 << bit)
 
-        # Write back
-        return await self.write_registers(address, [new_value])
+        # Write back (skip verification - RW registers don't have status)
+        return await self.write_registers(address, [new_value], skip_verify=True)
 
     async def read_holding_registers(self, address: int, count: int) -> Any:
         """Read holding registers from the device."""
@@ -116,7 +116,8 @@ class ModbusMasterCoordinator:
         self,
         address: int,
         values: List[int],
-        status_register: Optional[int] = None
+        status_register: Optional[int] = None,
+        skip_verify: bool = False
     ) -> bool:
         """Write registers to the device with optional status verification."""
         result = await self._pooled_client.submit_operation(
@@ -126,6 +127,10 @@ class ModbusMasterCoordinator:
 
         if result is None or result.isError():
             return False
+
+        # Skip verification for direct RW registers (e.g., relay modules)
+        if skip_verify:
+            return True
 
         # Verify write status
         status_reg = (

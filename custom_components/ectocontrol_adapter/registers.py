@@ -486,17 +486,17 @@ REGISTERS_RELAY_W = {
         "input_type": BITMASK_SWITCH_INPUT,
         "bit_switches": [
             # Channels 1-8 (bits 8-15, MSB byte)
-            {"bit": 8, "name": "relay_1", "icon": "mdi:electric-switch"},
-            {"bit": 9, "name": "relay_2", "icon": "mdi:electric-switch"},
-            {"bit": 10, "name": "relay_3", "icon": "mdi:electric-switch"},
-            {"bit": 11, "name": "relay_4", "icon": "mdi:electric-switch"},
-            {"bit": 12, "name": "relay_5", "icon": "mdi:electric-switch"},
-            {"bit": 13, "name": "relay_6", "icon": "mdi:electric-switch"},
-            {"bit": 14, "name": "relay_7", "icon": "mdi:electric-switch"},
-            {"bit": 15, "name": "relay_8", "icon": "mdi:electric-switch"},
+            {"bit": 8, "name": "relay_1"},
+            {"bit": 9, "name": "relay_2"},
+            {"bit": 10, "name": "relay_3"},
+            {"bit": 11, "name": "relay_4"},
+            {"bit": 12, "name": "relay_5"},
+            {"bit": 13, "name": "relay_6"},
+            {"bit": 14, "name": "relay_7"},
+            {"bit": 15, "name": "relay_8"},
             # Channels 9-10 (bits 0-1, LSB byte)
-            {"bit": 0, "name": "relay_9", "icon": "mdi:electric-switch"},
-            {"bit": 1, "name": "relay_10", "icon": "mdi:electric-switch"},
+            {"bit": 0, "name": "relay_9"},
+            {"bit": 1, "name": "relay_10"},
         ]
     },
 }
@@ -513,7 +513,6 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,  # seconds → 500ms units
         "unit_of_measurement": UnitOfTime.SECONDS,
-        "icon": "mdi:timer",
     },
     REG_RW_RELAY_TIMER_BASE + 1: {
         "name": "relay_2_timer",
@@ -523,7 +522,6 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
-        "icon": "mdi:timer",
     },
     REG_RW_RELAY_TIMER_BASE + 2: {
         "name": "relay_3_timer",
@@ -533,7 +531,6 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
-        "icon": "mdi:timer",
     },
     REG_RW_RELAY_TIMER_BASE + 3: {
         "name": "relay_4_timer",
@@ -543,7 +540,6 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
-        "icon": "mdi:timer",
     },
     REG_RW_RELAY_TIMER_BASE + 4: {
         "name": "relay_5_timer",
@@ -553,7 +549,6 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
-        "icon": "mdi:timer",
     },
     REG_RW_RELAY_TIMER_BASE + 5: {
         "name": "relay_6_timer",
@@ -563,7 +558,6 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
-        "icon": "mdi:timer",
     },
     REG_RW_RELAY_TIMER_BASE + 6: {
         "name": "relay_7_timer",
@@ -573,7 +567,6 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
-        "icon": "mdi:timer",
     },
     REG_RW_RELAY_TIMER_BASE + 7: {
         "name": "relay_8_timer",
@@ -583,7 +576,6 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
-        "icon": "mdi:timer",
     },
     REG_RW_RELAY_TIMER_BASE + 8: {
         "name": "relay_9_timer",
@@ -593,7 +585,6 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
-        "icon": "mdi:timer",
     },
     REG_RW_RELAY_TIMER_BASE + 9: {
         "name": "relay_10_timer",
@@ -603,7 +594,6 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
-        "icon": "mdi:timer",
     },
 }
 
