@@ -144,6 +144,12 @@ class PooledClient:
                 count=data["count"],
                 device_id=data["device_id"]
             )
+        elif op == "read_input_registers":
+            return await self._client.read_input_registers(
+                address=data["address"],
+                count=data["count"],
+                device_id=data["device_id"]
+            )
         elif op == "write_registers":
             return await self._client.write_registers(
                 address=data["address"],
