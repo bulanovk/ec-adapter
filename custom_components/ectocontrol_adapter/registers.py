@@ -382,44 +382,72 @@ REGISTERS_R = {
 
 # Contact Splitter Input Registers (function code 0x04)
 # Per MODBUS_PROTOCOL_RU.md section 3.2 - contact states are INPUT registers
-REG_R_CONTACT_CHANNELS_1_8 = 0x0010   # Channels 1-8 bitfield (bits 0-7)
-REG_R_CONTACT_CHANNELS_9_10 = 0x0011  # Channels 9-10 bitfield (bits 0-1)
+#
+# Register layout (16-bit value):
+#   MSB (byte 0) = channels 0-7, mapped to bits 15-8 of register value
+#   LSB (byte 1) = channels 8-15, mapped to bits 7-0 of register value
+#
+# Channel N mapping:
+#   Register = N / 16 (0x10 for channels 0-15, 0x11 for channels 16-31)
+#   Byte = N / 8 (0=MSB, 1=LSB for reg 0x10)
+#   Bit = N % 8
+#   Bit in 16-bit value = (N % 16) for channels 8-15, or (N % 16) + 8 for channels 0-7
 
-REGISTERS_INPUT = {
-    REG_R_CONTACT_CHANNELS_1_8: {
-        "name": "contact_channels_1_8",
+REG_R_CONTACT_CHANNELS = 0x0010  # Channels 0-15 (bits 15-8 = ch 0-7, bits 7-0 = ch 8-15)
+
+# 8-channel variant: channels 0-7 (bits 15-8 of register 0x10)
+REGISTERS_INPUT_8CH = {
+    REG_R_CONTACT_CHANNELS: {
+        "name": "contact_channels",
         "count": 1,
         "data_type": "uint16",
         "input_type": "input",  # INPUT register (function code 0x04)
         "scan_interval": 5,
         "category": EntityCategory.DIAGNOSTIC,
         "bitmasks": {
-            0b00000001: {"type": BM_BINARY, "name": "contact_1", "device_class": BinarySensorDeviceClass.OPENING},
-            0b00000010: {"type": BM_BINARY, "name": "contact_2", "device_class": BinarySensorDeviceClass.OPENING},
-            0b00000100: {"type": BM_BINARY, "name": "contact_3", "device_class": BinarySensorDeviceClass.OPENING},
-            0b00001000: {"type": BM_BINARY, "name": "contact_4", "device_class": BinarySensorDeviceClass.OPENING},
-            0b00010000: {"type": BM_BINARY, "name": "contact_5", "device_class": BinarySensorDeviceClass.OPENING},
-            0b00100000: {"type": BM_BINARY, "name": "contact_6", "device_class": BinarySensorDeviceClass.OPENING},
-            0b01000000: {"type": BM_BINARY, "name": "contact_7", "device_class": BinarySensorDeviceClass.OPENING},
-            0b10000000: {"type": BM_BINARY, "name": "contact_8", "device_class": BinarySensorDeviceClass.OPENING},
-        }
-    },
-    REG_R_CONTACT_CHANNELS_9_10: {
-        "name": "contact_channels_9_10",
-        "count": 1,
-        "data_type": "uint16",
-        "input_type": "input",  # INPUT register (function code 0x04)
-        "scan_interval": 5,
-        "category": EntityCategory.DIAGNOSTIC,
-        "bitmasks": {
-            0b00000001: {"type": BM_BINARY, "name": "contact_9", "device_class": BinarySensorDeviceClass.OPENING},
-            0b00000010: {"type": BM_BINARY, "name": "contact_10", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0100: {"type": BM_BINARY, "name": "contact_0", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0200: {"type": BM_BINARY, "name": "contact_1", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0400: {"type": BM_BINARY, "name": "contact_2", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0800: {"type": BM_BINARY, "name": "contact_3", "device_class": BinarySensorDeviceClass.OPENING},
+            0x1000: {"type": BM_BINARY, "name": "contact_4", "device_class": BinarySensorDeviceClass.OPENING},
+            0x2000: {"type": BM_BINARY, "name": "contact_5", "device_class": BinarySensorDeviceClass.OPENING},
+            0x4000: {"type": BM_BINARY, "name": "contact_6", "device_class": BinarySensorDeviceClass.OPENING},
+            0x8000: {"type": BM_BINARY, "name": "contact_7", "device_class": BinarySensorDeviceClass.OPENING},
         }
     }
 }
 
-# Merge input registers into REGISTERS_R for coordinator access
-REGISTERS_R.update(REGISTERS_INPUT)
+# 10-channel variant: channels 0-7 (bits 15-8) + channels 8-9 (bits 1-0)
+REGISTERS_INPUT_10CH = {
+    REG_R_CONTACT_CHANNELS: {
+        "name": "contact_channels",
+        "count": 1,
+        "data_type": "uint16",
+        "input_type": "input",  # INPUT register (function code 0x04)
+        "scan_interval": 5,
+        "category": EntityCategory.DIAGNOSTIC,
+        "bitmasks": {
+            0x0100: {"type": BM_BINARY, "name": "contact_0", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0200: {"type": BM_BINARY, "name": "contact_1", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0400: {"type": BM_BINARY, "name": "contact_2", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0800: {"type": BM_BINARY, "name": "contact_3", "device_class": BinarySensorDeviceClass.OPENING},
+            0x1000: {"type": BM_BINARY, "name": "contact_4", "device_class": BinarySensorDeviceClass.OPENING},
+            0x2000: {"type": BM_BINARY, "name": "contact_5", "device_class": BinarySensorDeviceClass.OPENING},
+            0x4000: {"type": BM_BINARY, "name": "contact_6", "device_class": BinarySensorDeviceClass.OPENING},
+            0x8000: {"type": BM_BINARY, "name": "contact_7", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0001: {"type": BM_BINARY, "name": "contact_8", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0002: {"type": BM_BINARY, "name": "contact_9", "device_class": BinarySensorDeviceClass.OPENING},
+        }
+    }
+}
+
+# Legacy aliases for backwards compatibility
+REGISTERS_INPUT = REGISTERS_INPUT_8CH  # Default to 8-channel
+
+# Merge all input register configs into REGISTERS_R for coordinator access
+# (coordinator.py looks up register configs from REGISTERS_R)
+REGISTERS_R.update(REGISTERS_INPUT_8CH)
+REGISTERS_R.update(REGISTERS_INPUT_10CH)
 
 # Input types
 BUTTON_INPUT = "button"
@@ -632,21 +660,12 @@ DEVICE_TYPE_DEFS = {
     },
     DEVICE_TYPE_CONTACT_SPLITTER_8CH: {
         "name": "Contact Sensor Splitter (8 channels)",
-        "read_registers": {
-            # Contact splitter uses INPUT registers (function code 0x04)
-            # 8-channel variant: only register 0x0010
-            REG_R_CONTACT_CHANNELS_1_8: REGISTERS_R[REG_R_CONTACT_CHANNELS_1_8],
-        },
+        "read_registers": REGISTERS_INPUT_8CH,
         "write_registers": {},
     },
     DEVICE_TYPE_CONTACT_SPLITTER_10CH: {
         "name": "Contact Sensor Splitter (10 channels)",
-        "read_registers": {
-            # Contact splitter uses INPUT registers (function code 0x04)
-            # 10-channel variant: both registers
-            REG_R_CONTACT_CHANNELS_1_8: REGISTERS_R[REG_R_CONTACT_CHANNELS_1_8],
-            REG_R_CONTACT_CHANNELS_9_10: REGISTERS_R[REG_R_CONTACT_CHANNELS_9_10],
-        },
+        "read_registers": REGISTERS_INPUT_10CH,
         "write_registers": {},
     },
     # Add more device types as needed
