@@ -307,6 +307,26 @@ Status registers for data registers 0x0010-0x003F. Status for register R is at a
 > **IMPORTANT:** Contact Splitter uses INPUT registers (function code 0x04), NOT holding registers!
 > The Contact Splitter does NOT have adapter status/version/uptime registers like boiler adapters.
 
+#### Home Assistant Entities
+
+Each channel is exposed as a **binary sensor** with:
+- **Device class:** `opening` (on=closed, off=open)
+- **Scan interval:** 5 seconds
+- **Translation keys:** `contact_1` through `contact_10`
+
+| Entity | Translation (EN) | Translation (RU) |
+|--------|------------------|------------------|
+| contact_1 | Contact Sensor 1 | Контактный датчик 1 |
+| contact_2 | Contact Sensor 2 | Контактный датчик 2 |
+| contact_3 | Contact Sensor 3 | Контактный датчик 3 |
+| contact_4 | Contact Sensor 4 | Контактный датчик 4 |
+| contact_5 | Contact Sensor 5 | Контактный датчик 5 |
+| contact_6 | Contact Sensor 6 | Контактный датчик 6 |
+| contact_7 | Contact Sensor 7 | Контактный датчик 7 |
+| contact_8 | Contact Sensor 8 | Контактный датчик 8 |
+| contact_9 | Contact Sensor 9 | Контактный датчик 9 |
+| contact_10 | Contact Sensor 10 | Контактный датчик 10 |
+
 #### Input Registers
 
 | Address | Field | Access | Description |
