@@ -235,6 +235,43 @@ REGISTERS_W = {
 
 This creates three independent switch entities that control bits 0, 1, and 2 of register 0x003A using read-modify-write operations.
 
+## Debugging
+
+### Transport-Level Logging
+
+To see actual Modbus requests/responses, enable pymodbus logging in Home Assistant's `configuration.yaml`:
+
+```yaml
+logger:
+  logs:
+    custom_components.ectocontrol_adapter: debug
+    pymodbus: debug
+```
+
+For more granular transport logging:
+```yaml
+logger:
+  logs:
+    pymodbus.client: debug
+    pymodbus.framer: debug
+    pymodbus.pdu: debug
+```
+
+### Adding New Modbus Operations
+
+When adding a new operation type (e.g., `read_input_registers`), update **both**:
+1. `master.py` - Add the method that calls `submit_operation()`
+2. `pool.py` - Add handler in `_execute_client_operation()` (easy to miss!)
+
+The pool serializes all operations, so unhandled operation types will throw "Unknown operation type" errors.
+
+### Register Input Types
+
+| input_type | Function Code | Description |
+|------------|---------------|-------------|
+| `"holding"` | 0x03 | Read holding registers |
+| `"input"` | 0x04 | Read input registers (read-only) |
+
 ## Code Style
 
 - Line length: 119 characters (`.flake8`)
