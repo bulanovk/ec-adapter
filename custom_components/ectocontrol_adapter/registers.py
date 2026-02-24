@@ -35,6 +35,13 @@ REG_TYPE_MAPPING = {
 BM_VALUE = 1
 BM_BINARY = 2
 
+# Input types for write registers
+BUTTON_INPUT = "button"
+NUMBER_INPUT = "number"
+SWITCH_INPUT = "switch"
+SELECT_INPUT = "select"
+BITMASK_SWITCH_INPUT = "bitmask_switch"
+
 # One byte types
 BYTE_TYPES = ['int8', 'uint8']
 
@@ -605,13 +612,6 @@ REGISTERS_RELAY_TIMERS_2CH = {
     REG_RW_RELAY_TIMER_BASE + 0: REGISTERS_RELAY_TIMERS_10CH[REG_RW_RELAY_TIMER_BASE + 0],
     REG_RW_RELAY_TIMER_BASE + 1: REGISTERS_RELAY_TIMERS_10CH[REG_RW_RELAY_TIMER_BASE + 1],
 }
-
-# Input types
-BUTTON_INPUT = "button"
-NUMBER_INPUT = "number"
-SWITCH_INPUT = "switch"
-SELECT_INPUT = "select"
-BITMASK_SWITCH_INPUT = "bitmask_switch"
 
 REGISTERS_W = {
     # Switch
