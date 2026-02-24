@@ -31,17 +31,21 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
         self._config = config_entry.options or config_entry.data
         self._master = master
 
-        self._registers = [addr for addr, config in registers]
-        if not set(self._registers).issubset(REGISTERS_R.keys()):
-            error = f"Unwnown registers found in: {self._registers}"
+        # Store registers as list of (address, config) tuples to preserve device-specific config
+        # Important: Different device types may use same register address with different settings
+        # (e.g., 0x0010 is "adapter_status" with holding type for OpenTherm, but "contact_channels"
+        # with input type for Contact Splitter)
+        self._registers = registers
+        register_addrs = [addr for addr, config in registers]
+        if not set(register_addrs).issubset(REGISTERS_R.keys()):
+            error = f"Unknown registers found in: {register_addrs}"
             _LOGGER.error(error)
             raise ValueError(error)
 
     async def _async_update_data(self):
         data = {}
         try:
-            for register in self._registers:
-                reg_config = REGISTERS_R[register]
+            for register, reg_config in self._registers:
                 input_type = reg_config.get("input_type", "holding")
 
                 # Choose read method based on input_type
