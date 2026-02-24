@@ -113,10 +113,30 @@
             "dhw_min_temp": {"name": "Min. DHW temperature"},
             "dhw_max_temp": {"name": "Max. DHW temperature"},
             "dhw_temp": {"name": "DHW temperature"},
-            "burner_modulation": {"name": "Burner modulation"}
+            "burner_modulation": {"name": "Burner modulation"},
+            "relay_1_timer": {"name": "Relay 1 Timer"},
+            "relay_2_timer": {"name": "Relay 2 Timer"},
+            "relay_3_timer": {"name": "Relay 3 Timer"},
+            "relay_4_timer": {"name": "Relay 4 Timer"},
+            "relay_5_timer": {"name": "Relay 5 Timer"},
+            "relay_6_timer": {"name": "Relay 6 Timer"},
+            "relay_7_timer": {"name": "Relay 7 Timer"},
+            "relay_8_timer": {"name": "Relay 8 Timer"},
+            "relay_9_timer": {"name": "Relay 9 Timer"},
+            "relay_10_timer": {"name": "Relay 10 Timer"}
         },
         "switch": {
-            "connect_type": {"name": "Switch to panel"}
+            "connect_type": {"name": "Switch to panel"},
+            "relay_1": {"name": "Relay 1"},
+            "relay_2": {"name": "Relay 2"},
+            "relay_3": {"name": "Relay 3"},
+            "relay_4": {"name": "Relay 4"},
+            "relay_5": {"name": "Relay 5"},
+            "relay_6": {"name": "Relay 6"},
+            "relay_7": {"name": "Relay 7"},
+            "relay_8": {"name": "Relay 8"},
+            "relay_9": {"name": "Relay 9"},
+            "relay_10": {"name": "Relay 10"}
         },
         "select": {
             "connect_type": {

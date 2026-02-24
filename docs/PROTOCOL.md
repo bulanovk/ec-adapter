@@ -442,45 +442,87 @@ Humidity: 897 / 10 = 89.7%
 **Device Types:** 0xC0 (2-channel), 0xC1 (10-channel)
 **Register Type:** Holding Registers (Function 0x03/0x10)
 
+> **NOTE:** The relay register (0x0010) is RW - the same register is used for both reading state and writing control. The integration uses `BITMASK_SWITCH_INPUT` which creates Switch entities that read their bit state from the register for display and use read-modify-write for changes.
+
+#### Home Assistant Entities
+
+Each channel is exposed as:
+- **Switch entity** - Controls relay on/off state
+- **Number entity** - Timer value in seconds (0-16383.5s)
+
+| Entity Type | Count | Platform | Translation Keys |
+|-------------|-------|----------|------------------|
+| Switch | 10 | `switch.py` | `relay_1` through `relay_10` |
+| Number | 10 | `number.py` | `relay_1_timer` through `relay_10_timer` |
+
+**2-channel variant (0xC0):** 2 switches + 2 number entities
+**10-channel variant (0xC1):** 10 switches + 10 number entities
+
 #### Channel State Register (0x0010)
 
 | Address | MSB | LSB | Access | Description |
 |---------|-----|-----|--------|-------------|
 | **0x0010** | Channels 0-7 | Channels 8-10 | RW | Channel enable bitfield |
 
-**Bitfield:**
-- Bit set (1) = Relay ON
-- Bit clear (0) = Relay OFF
+**Bitfield Structure (per MODBUS_PROTOCOL_RU.md):**
+> Byte 0 = MSB, Byte 1 = LSB
 
-#### Timer Registers (0x0020+)
+| Channel | Bit Position | Bitmask | State Meaning |
+|---------|-------------|---------|---------------|
+| 1 (ch 0) | Bit 8 | 0x0100 | 0=OFF, 1=ON |
+| 2 (ch 1) | Bit 9 | 0x0200 | 0=OFF, 1=ON |
+| 3 (ch 2) | Bit 10 | 0x0400 | 0=OFF, 1=ON |
+| 4 (ch 3) | Bit 11 | 0x0800 | 0=OFF, 1=ON |
+| 5 (ch 4) | Bit 12 | 0x1000 | 0=OFF, 1=ON |
+| 6 (ch 5) | Bit 13 | 0x2000 | 0=OFF, 1=ON |
+| 7 (ch 6) | Bit 14 | 0x4000 | 0=OFF, 1=ON |
+| 8 (ch 7) | Bit 15 | 0x8000 | 0=OFF, 1=ON |
+| 9 (ch 8) | Bit 0 | 0x0001 | 0=OFF, 1=ON |
+| 10 (ch 9) | Bit 1 | 0x0002 | 0=OFF, 1=ON |
+
+#### Timer Registers (0x0020-0x0029)
 
 | Address | Field | Access | Description |
 |---------|-------|--------|-------------|
-| **0x0020** | Channel 0 Timer | RW | Timer for channel 0 |
-| **0x0021** | Channel 1 Timer | RW | Timer for channel 1 |
-| ... | ... | RW | ... |
+| **0x0020** | Channel 1 Timer | RW | Timer for channel 1 |
+| **0x0021** | Channel 2 Timer | RW | Timer for channel 2 |
+| **0x0022** | Channel 3 Timer | RW | Timer for channel 3 |
+| **0x0023** | Channel 4 Timer | RW | Timer for channel 4 |
+| **0x0024** | Channel 5 Timer | RW | Timer for channel 5 |
+| **0x0025** | Channel 6 Timer | RW | Timer for channel 6 |
+| **0x0026** | Channel 7 Timer | RW | Timer for channel 7 |
+| **0x0027** | Channel 8 Timer | RW | Timer for channel 8 |
+| **0x0028** | Channel 9 Timer | RW | Timer for channel 9 |
+| **0x0029** | Channel 10 Timer | RW | Timer for channel 10 |
 
 **Timer Format (16-bit):**
 ```
-Bit 15: Initial state (applied immediately on write)
+Bit 15: Initial state (applied immediately on write, then cleared by device)
   0 = OFF
   1 = ON
 
 Bits 14-0: Timer value
   Unit: 500ms per count
-  Range: 0x0001-0x7FFF (0.5s to 16383.5s)
-  0 = Timer not running
+  Range: 0x0001-0x7FFF (0.5s to 16383.5s ≈ 4.5 hours)
+  0x0000 = Timer not running
 
 Behavior:
-  1. Write value with bit 15 set → relay turns ON
-  2. Bit 15 is cleared automatically
+  1. Write value with bit 15 set → relay turns ON immediately
+  2. Bit 15 is cleared automatically by device
   3. Remaining value counts down
   4. When value reaches 0 → relay toggles to opposite state
 ```
 
+**Home Assistant Timer Entity:**
+- **Unit:** Seconds
+- **Scale:** ×2 (converts seconds to 500ms units for protocol)
+- **Range:** 0 to 16383.5 seconds
+- **Step:** 0.5 seconds
+
 **Example - Turn ON channel 2 for 5 seconds:**
 ```
-Timer value = 5.0 / 0.5 = 10 counts
+User sets timer to 5.0 seconds in Home Assistant
+Internal conversion: 5.0 × 2 = 10 counts
 Initial state = ON (bit 15 set)
 Register value = 0x8000 | 0x000A = 0x800A
 Write 0x800A to register 0x0021
@@ -669,8 +711,8 @@ class ModbusProtocol:
 | 0x22 | Temp Sensor | **INPUT** | 0x0020+ |
 | 0x23 | Humidity Sensor | **INPUT** | 0x0020+ |
 | 0x59 | Contact Splitter | **INPUT** | 0x0010-0x0011 |
-| 0xC0 | Relay 2ch | Holding | 0x0010, 0x0020-0x0021 |
-| 0xC1 | Relay 10ch | Holding | 0x0010, 0x0020-0x0029 |
+| **0xC0** | **Relay 2ch** | Holding | 0x0010, 0x0020-0x0021 |
+| **0xC1** | **Relay 10ch** | Holding | 0x0010, 0x0020-0x0029 |
 
 ### Function Code Summary
 
@@ -679,7 +721,7 @@ class ModbusProtocol:
 | Boiler Adapters | 0x03 | 0x06/0x10 |
 | Contact Splitter | **0x04** | - |
 | Temp/Humidity | **0x04** | - |
-| Relay Blocks | 0x03 | 0x06/0x10 |
+| **Relay Blocks** | 0x03 | 0x06/0x10 |
 
 ---
 

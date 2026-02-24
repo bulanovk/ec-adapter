@@ -111,6 +111,8 @@ Some devices have variants based on channel count. For these, the device type ke
 |-------------|-----|-----------|
 | Contact Splitter 8ch | `(0x59, 8)` | 0x0010 (channels 0-7) |
 | Contact Splitter 10ch | `(0x59, 10)` | 0x0010 (channels 0-9) |
+| Relay Block 2ch | `(0xC0, 2)` | 0x0010, 0x0020-0x0021 |
+| Relay Block 10ch | `(0xC1, 10)` | 0x0010, 0x0020-0x0029 |
 
 The detection logic in `__init__.py` maps the base device type + channel count to the appropriate variant definition.
 
@@ -123,6 +125,31 @@ Channels use a specific byte/bit layout in register 0x0010 (16-bit value):
 Formula: `Register = N/16`, `Byte = N/8`, `Bit = N%8`
 
 Sensor names are 1-indexed for display (channel 0 → contact_1).
+
+#### Relay Module Channel Mapping
+
+Relay modules use a specific bit layout in register 0x0010 (16-bit value):
+- **Channels 1-8**: Bits 8-15 (MSB byte) - bitmask values 0x0100 to 0x8000
+- **Channels 9-10**: Bits 0-1 (LSB byte) - bitmask values 0x0001 to 0x0002
+
+| Channel | Bit Position | Bitmask |
+|---------|-------------|---------|
+| 1 (ch 0) | Bit 8 | 0x0100 |
+| 2 (ch 1) | Bit 9 | 0x0200 |
+| 3 (ch 2) | Bit 10 | 0x0400 |
+| 4 (ch 3) | Bit 11 | 0x0800 |
+| 5 (ch 4) | Bit 12 | 0x1000 |
+| 6 (ch 5) | Bit 13 | 0x2000 |
+| 7 (ch 6) | Bit 14 | 0x4000 |
+| 8 (ch 7) | Bit 15 | 0x8000 |
+| 9 (ch 8) | Bit 0 | 0x0001 |
+| 10 (ch 9) | Bit 1 | 0x0002 |
+
+The relay register (0x0010) is RW - both reading state and writing control use the same register. The `BITMASK_SWITCH_INPUT` type creates Switch entities that:
+1. Read their bit state from the register for display
+2. Use read-modify-write for changes to the same register
+
+Timer registers (0x0020-0x0029) use `NUMBER_INPUT` with `scale=2` to convert seconds to 500ms units.
 
 ### Write Verification
 
@@ -360,7 +387,20 @@ To add support for a new device type:
    }
    ```
 
+5. Add entity translations to `translations/en.json`:
+   ```json
+   {
+     "entity": {
+       "sensor": {
+         "new_sensor": {"name": "New Sensor"}
+       }
+     }
+   }
+   ```
+
 The integration will automatically detect the device type and create entities based on the configured registers.
+
+**Tip:** Consult `docs/PROTOCOL.md` for authoritative register layouts and bit mapping tables when implementing new device types.
 
 ### Adding a Device Type with Variants
 

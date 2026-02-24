@@ -97,6 +97,11 @@ REG_W_CIRCUIT_ENABLE = 0x003A
 REG_W_COMMAND = 0x0080
 REG_R_COMMAND_REPLY = 0x0081
 
+# Relay Module Registers (Device Types 0xC0, 0xC1)
+# Same register for read and write - RW holding register
+REG_RW_RELAY_CHANNELS = 0x0010    # Channel control/state (bitfield, RW)
+REG_RW_RELAY_TIMER_BASE = 0x0020  # Timer registers base (0x0020-0x0029)
+
 # Data types for unpack via python `struct` module
 REGISTERS_R = {
     REG_R_ADAPTER_STATUS: {
@@ -449,6 +454,158 @@ REGISTERS_INPUT = REGISTERS_INPUT_8CH  # Default to 8-channel
 REGISTERS_R.update(REGISTERS_INPUT_8CH)
 REGISTERS_R.update(REGISTERS_INPUT_10CH)
 
+# Relay Module Read Register (Device Types 0xC0, 0xC1)
+# Register 0x0010 is RW - coordinator polls it so switches can read their state
+REGISTERS_RELAY_R = {
+    REG_RW_RELAY_CHANNELS: {
+        "name": "relay_channels_raw",
+        "count": 1,
+        "data_type": "uint16",
+        "input_type": "holding",
+        "scan_interval": 5,
+        "category": EntityCategory.DIAGNOSTIC,
+    }
+}
+
+# Merge relay read registers into REGISTERS_R for coordinator access
+REGISTERS_R.update(REGISTERS_RELAY_R)
+
+# Relay Module Write Registers (Device Types 0xC0, 0xC1)
+# Channel control uses BITMASK_SWITCH_INPUT - creates switches that read/write same register
+# Bit positions: channels 1-8 in bits 8-15, channels 9-10 in bits 0-1
+REGISTERS_RELAY_W = {
+    REG_RW_RELAY_CHANNELS: {
+        "name": "relay_channels",
+        "input_type": BITMASK_SWITCH_INPUT,
+        "bit_switches": [
+            # Channels 1-8 (bits 8-15, MSB byte)
+            {"bit": 8, "name": "relay_1", "icon": "mdi:electric-switch"},
+            {"bit": 9, "name": "relay_2", "icon": "mdi:electric-switch"},
+            {"bit": 10, "name": "relay_3", "icon": "mdi:electric-switch"},
+            {"bit": 11, "name": "relay_4", "icon": "mdi:electric-switch"},
+            {"bit": 12, "name": "relay_5", "icon": "mdi:electric-switch"},
+            {"bit": 13, "name": "relay_6", "icon": "mdi:electric-switch"},
+            {"bit": 14, "name": "relay_7", "icon": "mdi:electric-switch"},
+            {"bit": 15, "name": "relay_8", "icon": "mdi:electric-switch"},
+            # Channels 9-10 (bits 0-1, LSB byte)
+            {"bit": 0, "name": "relay_9", "icon": "mdi:electric-switch"},
+            {"bit": 1, "name": "relay_10", "icon": "mdi:electric-switch"},
+        ]
+    },
+}
+
+# Timer registers for 10-channel relay module
+# Timer value in seconds, scale=2 converts to 500ms units
+# Max timer: 32767 * 0.5 = 16383.5 seconds
+REGISTERS_RELAY_TIMERS_10CH = {
+    REG_RW_RELAY_TIMER_BASE + 0: {
+        "name": "relay_1_timer",
+        "input_type": NUMBER_INPUT,
+        "min_value": 0,
+        "max_value": 16383.5,
+        "step": 0.5,
+        "scale": 2,  # seconds → 500ms units
+        "unit_of_measurement": UnitOfTime.SECONDS,
+        "icon": "mdi:timer",
+    },
+    REG_RW_RELAY_TIMER_BASE + 1: {
+        "name": "relay_2_timer",
+        "input_type": NUMBER_INPUT,
+        "min_value": 0,
+        "max_value": 16383.5,
+        "step": 0.5,
+        "scale": 2,
+        "unit_of_measurement": UnitOfTime.SECONDS,
+        "icon": "mdi:timer",
+    },
+    REG_RW_RELAY_TIMER_BASE + 2: {
+        "name": "relay_3_timer",
+        "input_type": NUMBER_INPUT,
+        "min_value": 0,
+        "max_value": 16383.5,
+        "step": 0.5,
+        "scale": 2,
+        "unit_of_measurement": UnitOfTime.SECONDS,
+        "icon": "mdi:timer",
+    },
+    REG_RW_RELAY_TIMER_BASE + 3: {
+        "name": "relay_4_timer",
+        "input_type": NUMBER_INPUT,
+        "min_value": 0,
+        "max_value": 16383.5,
+        "step": 0.5,
+        "scale": 2,
+        "unit_of_measurement": UnitOfTime.SECONDS,
+        "icon": "mdi:timer",
+    },
+    REG_RW_RELAY_TIMER_BASE + 4: {
+        "name": "relay_5_timer",
+        "input_type": NUMBER_INPUT,
+        "min_value": 0,
+        "max_value": 16383.5,
+        "step": 0.5,
+        "scale": 2,
+        "unit_of_measurement": UnitOfTime.SECONDS,
+        "icon": "mdi:timer",
+    },
+    REG_RW_RELAY_TIMER_BASE + 5: {
+        "name": "relay_6_timer",
+        "input_type": NUMBER_INPUT,
+        "min_value": 0,
+        "max_value": 16383.5,
+        "step": 0.5,
+        "scale": 2,
+        "unit_of_measurement": UnitOfTime.SECONDS,
+        "icon": "mdi:timer",
+    },
+    REG_RW_RELAY_TIMER_BASE + 6: {
+        "name": "relay_7_timer",
+        "input_type": NUMBER_INPUT,
+        "min_value": 0,
+        "max_value": 16383.5,
+        "step": 0.5,
+        "scale": 2,
+        "unit_of_measurement": UnitOfTime.SECONDS,
+        "icon": "mdi:timer",
+    },
+    REG_RW_RELAY_TIMER_BASE + 7: {
+        "name": "relay_8_timer",
+        "input_type": NUMBER_INPUT,
+        "min_value": 0,
+        "max_value": 16383.5,
+        "step": 0.5,
+        "scale": 2,
+        "unit_of_measurement": UnitOfTime.SECONDS,
+        "icon": "mdi:timer",
+    },
+    REG_RW_RELAY_TIMER_BASE + 8: {
+        "name": "relay_9_timer",
+        "input_type": NUMBER_INPUT,
+        "min_value": 0,
+        "max_value": 16383.5,
+        "step": 0.5,
+        "scale": 2,
+        "unit_of_measurement": UnitOfTime.SECONDS,
+        "icon": "mdi:timer",
+    },
+    REG_RW_RELAY_TIMER_BASE + 9: {
+        "name": "relay_10_timer",
+        "input_type": NUMBER_INPUT,
+        "min_value": 0,
+        "max_value": 16383.5,
+        "step": 0.5,
+        "scale": 2,
+        "unit_of_measurement": UnitOfTime.SECONDS,
+        "icon": "mdi:timer",
+    },
+}
+
+# Timer registers for 2-channel relay module (only channels 1-2)
+REGISTERS_RELAY_TIMERS_2CH = {
+    REG_RW_RELAY_TIMER_BASE + 0: REGISTERS_RELAY_TIMERS_10CH[REG_RW_RELAY_TIMER_BASE + 0],
+    REG_RW_RELAY_TIMER_BASE + 1: REGISTERS_RELAY_TIMERS_10CH[REG_RW_RELAY_TIMER_BASE + 1],
+}
+
 # Input types
 BUTTON_INPUT = "button"
 NUMBER_INPUT = "number"
@@ -644,6 +801,8 @@ from .const import (
     DEVICE_TYPE_HUMIDITY_SENSOR,
     DEVICE_TYPE_CONTACT_SENSOR,
     DEVICE_TYPE_NAVIEN,
+    DEVICE_TYPE_RELAY_2CH,
+    DEVICE_TYPE_RELAY_10CH,
 )
 
 # Device type definitions
@@ -667,6 +826,22 @@ DEVICE_TYPE_DEFS = {
         "name": "Contact Sensor Splitter (10 channels)",
         "read_registers": REGISTERS_INPUT_10CH,
         "write_registers": {},
+    },
+    DEVICE_TYPE_RELAY_2CH: {
+        "name": "Relay Block (2 channels)",
+        "read_registers": REGISTERS_RELAY_R,
+        "write_registers": {
+            **REGISTERS_RELAY_W,  # Channel switches (only bits 8-9 used)
+            **REGISTERS_RELAY_TIMERS_2CH,  # Timers for channels 1-2
+        },
+    },
+    DEVICE_TYPE_RELAY_10CH: {
+        "name": "Relay Block (10 channels)",
+        "read_registers": REGISTERS_RELAY_R,
+        "write_registers": {
+            **REGISTERS_RELAY_W,  # All 10 channel switches
+            **REGISTERS_RELAY_TIMERS_10CH,  # All 10 timers
+        },
     },
     # Add more device types as needed
 }

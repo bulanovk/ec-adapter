@@ -111,6 +111,14 @@ DEVICE_TYPE_CONTACT_SPLITTER = 0x59  # Contact Sensor Splitter (base type)
 DEVICE_TYPE_CONTACT_SPLITTER_8CH = (0x59, 8)   # 8-channel Contact Splitter
 DEVICE_TYPE_CONTACT_SPLITTER_10CH = (0x59, 10) # 10-channel Contact Splitter
 
+# Relay Module Types
+DEVICE_TYPE_RELAY_BLOCK_2CH = 0xC0   # 2-channel Relay Module (base type)
+DEVICE_TYPE_RELAY_BLOCK_10CH = 0xC1  # 10-channel Relay Module (base type)
+
+# Relay variants (distinguished by channel count)
+DEVICE_TYPE_RELAY_2CH = (0xC0, 2)    # 2-channel Relay Module
+DEVICE_TYPE_RELAY_10CH = (0xC1, 10)  # 10-channel Relay Module
+
 DEVICE_TYPE_NAMES = {
     DEVICE_TYPE_OPENTHERM_V2: "OpenTherm Adapter v2",
     DEVICE_TYPE_EBUS: "eBus Adapter",
@@ -121,4 +129,8 @@ DEVICE_TYPE_NAMES = {
     DEVICE_TYPE_CONTACT_SPLITTER: "Contact Sensor Splitter",
     DEVICE_TYPE_CONTACT_SPLITTER_8CH: "Contact Sensor Splitter (8ch)",
     DEVICE_TYPE_CONTACT_SPLITTER_10CH: "Contact Sensor Splitter (10ch)",
+    DEVICE_TYPE_RELAY_BLOCK_2CH: "Relay Block (2 channels)",
+    DEVICE_TYPE_RELAY_BLOCK_10CH: "Relay Block (10 channels)",
+    DEVICE_TYPE_RELAY_2CH: "Relay Block (2 channels)",
+    DEVICE_TYPE_RELAY_10CH: "Relay Block (10 channels)",
 }

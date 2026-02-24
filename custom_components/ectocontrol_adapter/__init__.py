@@ -6,7 +6,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
-from .const import DOMAIN, OPT_NAME, DEVICE_TYPE_NAMES, DEVICE_TYPE_CONTACT_SPLITTER
+from .const import DOMAIN, OPT_NAME, DEVICE_TYPE_NAMES, DEVICE_TYPE_CONTACT_SPLITTER, DEVICE_TYPE_RELAY_BLOCK_2CH, DEVICE_TYPE_RELAY_BLOCK_10CH
 from .coordinator import ModbusDataUpdateCoordinator
 from .master import ModbusMasterCoordinator
 from .pool import ModbusClientPool, POOL_KEY
@@ -75,6 +75,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
                 device_type_key = (DEVICE_TYPE_CONTACT_SPLITTER, 8)
             else:
                 device_type_key = (DEVICE_TYPE_CONTACT_SPLITTER, 10)
+        # For Relay modules, use composite type key (type, channels)
+        elif device_type == DEVICE_TYPE_RELAY_BLOCK_2CH:
+            device_type_key = (DEVICE_TYPE_RELAY_BLOCK_2CH, 2)
+        elif device_type == DEVICE_TYPE_RELAY_BLOCK_10CH:
+            device_type_key = (DEVICE_TYPE_RELAY_BLOCK_10CH, 10)
         else:
             device_type_key = device_type
 

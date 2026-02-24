@@ -218,6 +218,8 @@ Some device types have variants based on channel count. These use composite keys
 |-------------|---------------|-------------|
 | Contact Splitter 8ch | `(0x59, 8)` | 8-channel variant, register 0x0010 only |
 | Contact Splitter 10ch | `(0x59, 10)` | 10-channel variant, registers 0x0010-0x0011 |
+| Relay Block 2ch | `(0xC0, 2)` | 2-channel relay module |
+| Relay Block 10ch | `(0xC1, 10)` | 10-channel relay module |
 
 The detection logic in `__init__.py` maps the base device type and channel count to the appropriate variant definition in `DEVICE_TYPE_DEFS`.
 
