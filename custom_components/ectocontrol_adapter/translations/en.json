@@ -93,7 +93,17 @@
             "opentherm_low_pressure": {"name": "[OpenTherm] Low pressure"},
             "opentherm_ignition_error": {"name": "[OpenTherm] Ignition error"},
             "opentherm_low_air_pressure": {"name": "[OpenTherm] Low Air pressure"},
-            "opentherm_coolant_overheating": {"name": "[OpenTherm] Coolant overheating"}
+            "opentherm_coolant_overheating": {"name": "[OpenTherm] Coolant overheating"},
+            "contact_1": {"name": "Contact Sensor 1"},
+            "contact_2": {"name": "Contact Sensor 2"},
+            "contact_3": {"name": "Contact Sensor 3"},
+            "contact_4": {"name": "Contact Sensor 4"},
+            "contact_5": {"name": "Contact Sensor 5"},
+            "contact_6": {"name": "Contact Sensor 6"},
+            "contact_7": {"name": "Contact Sensor 7"},
+            "contact_8": {"name": "Contact Sensor 8"},
+            "contact_9": {"name": "Contact Sensor 9"},
+            "contact_10": {"name": "Contact Sensor 10"}
         },
         "number": {
             "coolant_temp": {"name": "Coolant Temperature"},

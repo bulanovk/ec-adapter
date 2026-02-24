@@ -93,7 +93,17 @@
             "opentherm_low_pressure": {"name": "[OpenTherm] Низкое давление в отопительном контуре"},
             "opentherm_ignition_error": {"name": "[OpenTherm] Ошибка розжига"},
             "opentherm_low_air_pressure": {"name": "[OpenTherm] Низкое давление воздуха"},
-            "opentherm_coolant_overheating": {"name": "[OpenTherm] Перегрев теплоносителя в контуре"}
+            "opentherm_coolant_overheating": {"name": "[OpenTherm] Перегрев теплоносителя в контуре"},
+            "contact_1": {"name": "Контактный датчик 1"},
+            "contact_2": {"name": "Контактный датчик 2"},
+            "contact_3": {"name": "Контактный датчик 3"},
+            "contact_4": {"name": "Контактный датчик 4"},
+            "contact_5": {"name": "Контактный датчик 5"},
+            "contact_6": {"name": "Контактный датчик 6"},
+            "contact_7": {"name": "Контактный датчик 7"},
+            "contact_8": {"name": "Контактный датчик 8"},
+            "contact_9": {"name": "Контактный датчик 9"},
+            "contact_10": {"name": "Контактный датчик 10"}
         },
         "number": {
             "coolant_temp": {"name": "Целевая Т. теплоносителя"},

@@ -393,6 +393,16 @@ REGISTERS_INPUT = {
         "input_type": "input",  # INPUT register (function code 0x04)
         "scan_interval": 5,
         "category": EntityCategory.DIAGNOSTIC,
+        "bitmasks": {
+            0b00000001: {"type": BM_BINARY, "name": "contact_1", "device_class": BinarySensorDeviceClass.OPENING},
+            0b00000010: {"type": BM_BINARY, "name": "contact_2", "device_class": BinarySensorDeviceClass.OPENING},
+            0b00000100: {"type": BM_BINARY, "name": "contact_3", "device_class": BinarySensorDeviceClass.OPENING},
+            0b00001000: {"type": BM_BINARY, "name": "contact_4", "device_class": BinarySensorDeviceClass.OPENING},
+            0b00010000: {"type": BM_BINARY, "name": "contact_5", "device_class": BinarySensorDeviceClass.OPENING},
+            0b00100000: {"type": BM_BINARY, "name": "contact_6", "device_class": BinarySensorDeviceClass.OPENING},
+            0b01000000: {"type": BM_BINARY, "name": "contact_7", "device_class": BinarySensorDeviceClass.OPENING},
+            0b10000000: {"type": BM_BINARY, "name": "contact_8", "device_class": BinarySensorDeviceClass.OPENING},
+        }
     },
     REG_R_CONTACT_CHANNELS_9_10: {
         "name": "contact_channels_9_10",
@@ -401,6 +411,10 @@ REGISTERS_INPUT = {
         "input_type": "input",  # INPUT register (function code 0x04)
         "scan_interval": 5,
         "category": EntityCategory.DIAGNOSTIC,
+        "bitmasks": {
+            0b00000001: {"type": BM_BINARY, "name": "contact_9", "device_class": BinarySensorDeviceClass.OPENING},
+            0b00000010: {"type": BM_BINARY, "name": "contact_10", "device_class": BinarySensorDeviceClass.OPENING},
+        }
     }
 }
 
