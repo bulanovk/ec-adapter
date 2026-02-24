@@ -101,6 +101,17 @@ The integration automatically detects the connected device type during setup by 
 
 Register configurations are filtered based on the detected device type using `DEVICE_TYPE_DEFS` in `registers.py`. This allows different device types to expose different entities based on their capabilities.
 
+#### Device Variants with Channel Count
+
+Some devices have variants based on channel count. For these, the device type key is a tuple `(device_type_code, channel_count)`:
+
+| Device Type | Key | Registers |
+|-------------|-----|-----------|
+| Contact Splitter 8ch | `(0x59, 8)` | 0x0010 only (channels 1-8) |
+| Contact Splitter 10ch | `(0x59, 10)` | 0x0010-0x0011 (channels 1-10) |
+
+The detection logic in `__init__.py` maps the base device type + channel count to the appropriate variant definition.
+
 ### Write Verification
 
 Write operations verify success by polling a status register (offset by `REG_STATUS_OFFSET` from the write address). The master coordinator retries reads up to `REG_DEFAULT_MAX_RETRIES` times with `REG_DEFAULT_RETRY_DELAY` delay.
@@ -338,3 +349,50 @@ To add support for a new device type:
    ```
 
 The integration will automatically detect the device type and create entities based on the configured registers.
+
+### Adding a Device Type with Variants
+
+For devices that have variants based on channel count (like Contact Splitter):
+
+1. Add base device type constant to `const.py`:
+   ```python
+   DEVICE_TYPE_MY_DEVICE = 0xXX
+   ```
+
+2. Add variant constants as tuples:
+   ```python
+   DEVICE_TYPE_MY_DEVICE_4CH = (0xXX, 4)
+   DEVICE_TYPE_MY_DEVICE_8CH = (0xXX, 8)
+   ```
+
+3. Add names for both base type and variants to `DEVICE_TYPE_NAMES`
+
+4. Add variant definitions to `DEVICE_TYPE_DEFS` in `registers.py`:
+   ```python
+   DEVICE_TYPE_DEFS = {
+       # ... existing types ...
+       DEVICE_TYPE_MY_DEVICE_4CH: {
+           "name": "My Device (4 channels)",
+           "read_registers": {
+               # Registers for 4-channel variant
+           },
+           "write_registers": {},
+       },
+       DEVICE_TYPE_MY_DEVICE_8CH: {
+           "name": "My Device (8 channels)",
+           "read_registers": {
+               # Registers for 8-channel variant
+           },
+           "write_registers": {},
+       },
+   }
+   ```
+
+5. Update detection logic in `__init__.py` to map to the correct variant:
+   ```python
+   if device_type == DEVICE_TYPE_MY_DEVICE:
+       if channel_count <= 4:
+           device_type_key = (DEVICE_TYPE_MY_DEVICE, 4)
+       else:
+           device_type_key = (DEVICE_TYPE_MY_DEVICE, 8)
+   ```

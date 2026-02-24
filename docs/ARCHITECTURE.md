@@ -210,6 +210,17 @@ Device type is detected during setup by reading generic registers:
 
 Detection determines which registers are available for the device.
 
+### Device Variants
+
+Some device types have variants based on channel count. These use composite keys as tuples `(device_type_code, channel_count)`:
+
+| Device Type | Composite Key | Description |
+|-------------|---------------|-------------|
+| Contact Splitter 8ch | `(0x59, 8)` | 8-channel variant, register 0x0010 only |
+| Contact Splitter 10ch | `(0x59, 10)` | 10-channel variant, registers 0x0010-0x0011 |
+
+The detection logic in `__init__.py` maps the base device type and channel count to the appropriate variant definition in `DEVICE_TYPE_DEFS`.
+
 ## Error Handling
 
 ### Connection Errors

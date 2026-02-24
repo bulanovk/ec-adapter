@@ -105,7 +105,11 @@ DEVICE_TYPE_NAVIEN = 0x16         # Navien Adapter
 DEVICE_TYPE_TEMP_SENSOR = 0x22    # Temperature Sensor
 DEVICE_TYPE_HUMIDITY_SENSOR = 0x23  # Humidity Sensor
 DEVICE_TYPE_CONTACT_SENSOR = 0x50  # Universal Contact Sensor
-DEVICE_TYPE_CONTACT_SPLITTER = 0x59  # Contact Sensor Splitter
+DEVICE_TYPE_CONTACT_SPLITTER = 0x59  # Contact Sensor Splitter (base type)
+
+# Contact Splitter variants (distinguished by channel count)
+DEVICE_TYPE_CONTACT_SPLITTER_8CH = (0x59, 8)   # 8-channel Contact Splitter
+DEVICE_TYPE_CONTACT_SPLITTER_10CH = (0x59, 10) # 10-channel Contact Splitter
 
 DEVICE_TYPE_NAMES = {
     DEVICE_TYPE_OPENTHERM_V2: "OpenTherm Adapter v2",
@@ -115,4 +119,6 @@ DEVICE_TYPE_NAMES = {
     DEVICE_TYPE_HUMIDITY_SENSOR: "Humidity Sensor",
     DEVICE_TYPE_CONTACT_SENSOR: "Contact Sensor",
     DEVICE_TYPE_CONTACT_SPLITTER: "Contact Sensor Splitter",
+    DEVICE_TYPE_CONTACT_SPLITTER_8CH: "Contact Sensor Splitter (8ch)",
+    DEVICE_TYPE_CONTACT_SPLITTER_10CH: "Contact Sensor Splitter (10ch)",
 }

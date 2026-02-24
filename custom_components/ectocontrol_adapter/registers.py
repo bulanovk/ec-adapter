@@ -596,7 +596,8 @@ REGISTERS_W = {
 from .const import (
     DEVICE_TYPE_OPENTHERM_V2,
     DEVICE_TYPE_EBUS,
-    DEVICE_TYPE_CONTACT_SPLITTER,
+    DEVICE_TYPE_CONTACT_SPLITTER_8CH,
+    DEVICE_TYPE_CONTACT_SPLITTER_10CH,
     DEVICE_TYPE_TEMP_SENSOR,
     DEVICE_TYPE_HUMIDITY_SENSOR,
     DEVICE_TYPE_CONTACT_SENSOR,
@@ -615,14 +616,20 @@ DEVICE_TYPE_DEFS = {
         "read_registers": REGISTERS_R,
         "write_registers": REGISTERS_W,
     },
-    DEVICE_TYPE_CONTACT_SPLITTER: {
-        "name": "Contact Sensor Splitter",
+    DEVICE_TYPE_CONTACT_SPLITTER_8CH: {
+        "name": "Contact Sensor Splitter (8 channels)",
         "read_registers": {
             # Contact splitter uses INPUT registers (function code 0x04)
-            # Per MODBUS_PROTOCOL_RU.md section 3.2
-            # Register 0x0010: Channels 1-8 bitfield
-            # Register 0x0011: Channels 9-10 bitfield
-            # Note: Contact Splitter does NOT have adapter_status/version/uptime
+            # 8-channel variant: only register 0x0010
+            REG_R_CONTACT_CHANNELS_1_8: REGISTERS_R[REG_R_CONTACT_CHANNELS_1_8],
+        },
+        "write_registers": {},
+    },
+    DEVICE_TYPE_CONTACT_SPLITTER_10CH: {
+        "name": "Contact Sensor Splitter (10 channels)",
+        "read_registers": {
+            # Contact splitter uses INPUT registers (function code 0x04)
+            # 10-channel variant: both registers
             REG_R_CONTACT_CHANNELS_1_8: REGISTERS_R[REG_R_CONTACT_CHANNELS_1_8],
             REG_R_CONTACT_CHANNELS_9_10: REGISTERS_R[REG_R_CONTACT_CHANNELS_9_10],
         },

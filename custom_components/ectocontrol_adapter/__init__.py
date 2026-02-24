@@ -6,7 +6,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
-from .const import DOMAIN, OPT_NAME, DEVICE_TYPE_NAMES
+from .const import DOMAIN, OPT_NAME, DEVICE_TYPE_NAMES, DEVICE_TYPE_CONTACT_SPLITTER
 from .coordinator import ModbusDataUpdateCoordinator
 from .master import ModbusMasterCoordinator
 from .pool import ModbusClientPool, POOL_KEY
@@ -66,14 +66,26 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     device_info = await master_coordinator.detect_device_type()
     if device_info:
         device_type = device_info["device_type"]
+        channel_count = device_info.get("channel_count", 0)
+
+        # For Contact Splitter, use composite type key (type, channels)
+        if device_type == DEVICE_TYPE_CONTACT_SPLITTER:
+            # Map to specific variant based on channel count
+            if channel_count <= 8:
+                device_type_key = (DEVICE_TYPE_CONTACT_SPLITTER, 8)
+            else:
+                device_type_key = (DEVICE_TYPE_CONTACT_SPLITTER, 10)
+        else:
+            device_type_key = device_type
+
         _LOGGER.info(
             "Detected device type: 0x%02X (%s)",
             device_type,
-            DEVICE_TYPE_NAMES.get(device_type, "Unknown")
+            DEVICE_TYPE_NAMES.get(device_type_key, DEVICE_TYPE_NAMES.get(device_type, "Unknown"))
         )
 
         # Get register configuration for this device type
-        device_def = DEVICE_TYPE_DEFS.get(device_type)
+        device_def = DEVICE_TYPE_DEFS.get(device_type_key)
         if device_def:
             read_regs = device_def.get("read_registers", REGISTERS_R)
             write_regs = device_def.get("write_registers", REGISTERS_W)
