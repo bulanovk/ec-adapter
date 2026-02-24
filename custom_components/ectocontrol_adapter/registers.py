@@ -405,14 +405,14 @@ REGISTERS_INPUT_8CH = {
         "scan_interval": 5,
         "category": EntityCategory.DIAGNOSTIC,
         "bitmasks": {
-            0x0100: {"type": BM_BINARY, "name": "contact_0", "device_class": BinarySensorDeviceClass.OPENING},
-            0x0200: {"type": BM_BINARY, "name": "contact_1", "device_class": BinarySensorDeviceClass.OPENING},
-            0x0400: {"type": BM_BINARY, "name": "contact_2", "device_class": BinarySensorDeviceClass.OPENING},
-            0x0800: {"type": BM_BINARY, "name": "contact_3", "device_class": BinarySensorDeviceClass.OPENING},
-            0x1000: {"type": BM_BINARY, "name": "contact_4", "device_class": BinarySensorDeviceClass.OPENING},
-            0x2000: {"type": BM_BINARY, "name": "contact_5", "device_class": BinarySensorDeviceClass.OPENING},
-            0x4000: {"type": BM_BINARY, "name": "contact_6", "device_class": BinarySensorDeviceClass.OPENING},
-            0x8000: {"type": BM_BINARY, "name": "contact_7", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0100: {"type": BM_BINARY, "name": "contact_1", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0200: {"type": BM_BINARY, "name": "contact_2", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0400: {"type": BM_BINARY, "name": "contact_3", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0800: {"type": BM_BINARY, "name": "contact_4", "device_class": BinarySensorDeviceClass.OPENING},
+            0x1000: {"type": BM_BINARY, "name": "contact_5", "device_class": BinarySensorDeviceClass.OPENING},
+            0x2000: {"type": BM_BINARY, "name": "contact_6", "device_class": BinarySensorDeviceClass.OPENING},
+            0x4000: {"type": BM_BINARY, "name": "contact_7", "device_class": BinarySensorDeviceClass.OPENING},
+            0x8000: {"type": BM_BINARY, "name": "contact_8", "device_class": BinarySensorDeviceClass.OPENING},
         }
     }
 }
@@ -427,16 +427,16 @@ REGISTERS_INPUT_10CH = {
         "scan_interval": 5,
         "category": EntityCategory.DIAGNOSTIC,
         "bitmasks": {
-            0x0100: {"type": BM_BINARY, "name": "contact_0", "device_class": BinarySensorDeviceClass.OPENING},
-            0x0200: {"type": BM_BINARY, "name": "contact_1", "device_class": BinarySensorDeviceClass.OPENING},
-            0x0400: {"type": BM_BINARY, "name": "contact_2", "device_class": BinarySensorDeviceClass.OPENING},
-            0x0800: {"type": BM_BINARY, "name": "contact_3", "device_class": BinarySensorDeviceClass.OPENING},
-            0x1000: {"type": BM_BINARY, "name": "contact_4", "device_class": BinarySensorDeviceClass.OPENING},
-            0x2000: {"type": BM_BINARY, "name": "contact_5", "device_class": BinarySensorDeviceClass.OPENING},
-            0x4000: {"type": BM_BINARY, "name": "contact_6", "device_class": BinarySensorDeviceClass.OPENING},
-            0x8000: {"type": BM_BINARY, "name": "contact_7", "device_class": BinarySensorDeviceClass.OPENING},
-            0x0001: {"type": BM_BINARY, "name": "contact_8", "device_class": BinarySensorDeviceClass.OPENING},
-            0x0002: {"type": BM_BINARY, "name": "contact_9", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0100: {"type": BM_BINARY, "name": "contact_1", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0200: {"type": BM_BINARY, "name": "contact_2", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0400: {"type": BM_BINARY, "name": "contact_3", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0800: {"type": BM_BINARY, "name": "contact_4", "device_class": BinarySensorDeviceClass.OPENING},
+            0x1000: {"type": BM_BINARY, "name": "contact_5", "device_class": BinarySensorDeviceClass.OPENING},
+            0x2000: {"type": BM_BINARY, "name": "contact_6", "device_class": BinarySensorDeviceClass.OPENING},
+            0x4000: {"type": BM_BINARY, "name": "contact_7", "device_class": BinarySensorDeviceClass.OPENING},
+            0x8000: {"type": BM_BINARY, "name": "contact_8", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0001: {"type": BM_BINARY, "name": "contact_9", "device_class": BinarySensorDeviceClass.OPENING},
+            0x0002: {"type": BM_BINARY, "name": "contact_10", "device_class": BinarySensorDeviceClass.OPENING},
         }
     }
 }
