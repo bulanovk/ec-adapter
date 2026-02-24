@@ -70,7 +70,7 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
         last_state = await self.async_get_last_state()
 
         # Restore last state and write to register (optional)
-        if last_state is not None:
+        if last_state is not None and last_state.state not in ("unknown", "unavailable"):
             self._attr_native_value = int(last_state.state)
 
             # Subscribe to binary sensor updates and component loaded event
