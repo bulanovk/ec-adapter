@@ -77,6 +77,8 @@ Key implication: All read operations go through data coordinators, while write o
 
 Entities are **auto-generated** from register definitions in `registers.py`, not manually coded. The `REGISTERS_R` dict defines read registers, `REGISTERS_W` defines write registers.
 
+**Important:** The coordinator looks up register configs from `REGISTERS_R` (see `coordinator.py:44`). All device-specific register configs must be merged into `REGISTERS_R` using `.update()`, even for devices with separate register dicts like Contact Splitter.
+
 Each register config can generate multiple entities through:
 - **bitmasks**: Extract individual bits or bit fields from a register value (BM_BINARY for binary sensors, BM_VALUE for sensor values)
 - **converters**: Transform raw data into derived values (e.g., uptime_to_boottime)
@@ -107,10 +109,20 @@ Some devices have variants based on channel count. For these, the device type ke
 
 | Device Type | Key | Registers |
 |-------------|-----|-----------|
-| Contact Splitter 8ch | `(0x59, 8)` | 0x0010 only (channels 1-8) |
-| Contact Splitter 10ch | `(0x59, 10)` | 0x0010-0x0011 (channels 1-10) |
+| Contact Splitter 8ch | `(0x59, 8)` | 0x0010 (channels 0-7) |
+| Contact Splitter 10ch | `(0x59, 10)` | 0x0010 (channels 0-9) |
 
 The detection logic in `__init__.py` maps the base device type + channel count to the appropriate variant definition.
+
+#### Contact Splitter Channel Mapping
+
+Channels use a specific byte/bit layout in register 0x0010 (16-bit value):
+- **Channels 0-7**: MSB (bits 15-8) - bitmask values 0x0100 to 0x8000
+- **Channels 8-15**: LSB (bits 7-0) - bitmask values 0x0001 to 0x0080
+
+Formula: `Register = N/16`, `Byte = N/8`, `Bit = N%8`
+
+Sensor names are 1-indexed for display (channel 0 → contact_1).
 
 ### Write Verification
 
