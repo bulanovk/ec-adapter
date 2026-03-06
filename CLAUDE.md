@@ -133,6 +133,8 @@ Relay modules use a specific bit layout in register 0x0010 (16-bit value):
 - **Channels 1-8**: Bits 8-15 (MSB byte) - bitmask values 0x0100 to 0x8000
 - **Channels 9-10**: Bits 0-1 (LSB byte) - bitmask values 0x0001 to 0x0002
 
+**Stateless device**: Relay modules lose all relay states on power loss (all relays turn OFF). HA is the source of truth - switch entities use `assumed_state=True` and restore state to device on connectivity restoration.
+
 | Channel | Bit Position | Bitmask |
 |---------|-------------|---------|
 | 1 (ch 0) | Bit 8 | 0x0100 |
