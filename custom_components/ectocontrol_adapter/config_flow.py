@@ -1,6 +1,7 @@
 """Config flow for ectoControl adapter."""
 
 import logging
+from typing import Optional
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -79,9 +80,8 @@ async def create_schema(hass, config_entry=None, user_input=None, type="init"):
         )
 
 
-async def check_user_input(user_input, pool: ModbusClientPool = None):
-    """
-    Validate connection to Modbus device.
+async def check_user_input(user_input, pool: Optional[ModbusClientPool] = None):
+    """Validate connection to Modbus device.
 
     Uses existing pooled connection if available, otherwise creates a temporary client.
     """
@@ -159,11 +159,12 @@ async def check_user_input(user_input, pool: ModbusClientPool = None):
     return errors
 
 
-def _get_pool(hass) -> ModbusClientPool:
+def _get_pool(hass) -> Optional[ModbusClientPool]:
     """Get the ModbusClientPool from hass.data."""
     from .const import DOMAIN
 
-    return hass.data.get(DOMAIN, {}).get(POOL_KEY)
+    pool: Optional[ModbusClientPool] = hass.data.get(DOMAIN, {}).get(POOL_KEY)
+    return pool
 
 
 class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):

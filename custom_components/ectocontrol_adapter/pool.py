@@ -2,7 +2,9 @@
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
+
+from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient, AsyncModbusUdpClient
 
 from .const import QUEUE_TIMEOUT
 from .helpers import create_modbus_client
@@ -10,6 +12,9 @@ from .helpers import create_modbus_client
 _LOGGER = logging.getLogger(__name__)
 
 POOL_KEY = "pool"
+
+# Type alias for Modbus async clients
+ModbusAsyncClient = Union[AsyncModbusTcpClient, AsyncModbusUdpClient, AsyncModbusSerialClient]
 
 
 def _get_pool_key(config: Dict[str, Any]) -> str:
@@ -41,20 +46,20 @@ def _get_pool_key(config: Dict[str, Any]) -> str:
 class PooledClient:
     """A pooled Modbus client with reference counting and operation queue."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]) -> None:
         """Initialize the pooled client.
 
         Args:
             config: Connection configuration dictionary.
         """
         self._config = config
-        self._client = None
+        self._client: Optional[ModbusAsyncClient] = None
         self._ref_count = 0
-        self._queue = asyncio.Queue()
-        self._processing_task = None
+        self._queue: asyncio.Queue[Tuple[str, str, Dict[str, Any], asyncio.Future[Any]]] = asyncio.Queue()
+        self._processing_task: Optional[asyncio.Task[None]] = None
         self._is_running = False
         self._operation_lock = asyncio.Lock()
-        self._current_operation = None
+        self._current_operation: Optional[str] = None
 
     async def acquire(self) -> bool:
         """Acquire a reference to this client. Starts processing if first ref."""
@@ -153,6 +158,9 @@ class PooledClient:
 
     async def _execute_client_operation(self, op: str, data: Dict[str, Any]) -> Any:
         """Execute operation on the client."""
+        if self._client is None:
+            raise Exception("Modbus client not initialized")
+
         if op == "read_holding_registers":
             return await self._client.read_holding_registers(
                 address=data["address"], count=data["count"], device_id=data["device_id"]
@@ -174,7 +182,7 @@ class PooledClient:
             raise RuntimeError("PooledClient is not running")
 
         operation_id = f"{op}_{id(data)}"
-        future = asyncio.Future()
+        future: asyncio.Future[Any] = asyncio.Future()
 
         await self._queue.put((operation_id, op, data, future))
         return await future

@@ -1,6 +1,7 @@
 """Switch entities for ectoControl adapter."""
 
 import logging
+from typing import TYPE_CHECKING, Any, Dict
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -9,6 +10,9 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from .const import DOMAIN
 from .mixins import ModbusUniqIdMixin
 from .registers import BITMASK_SWITCH_INPUT, SWITCH_INPUT
+
+if TYPE_CHECKING:
+    from .master import ModbusMasterCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,7 +45,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
     """Modbus switch entity."""
 
-    def __init__(self, hass, master_coordinator, register_addr, register_config):
+    def __init__(
+        self,
+        hass,
+        master_coordinator: "ModbusMasterCoordinator",
+        register_addr: int,
+        register_config: Dict[str, Any],
+    ) -> None:
         """Initialize the switch entity.
 
         Args:
@@ -125,7 +135,15 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
     and synced to device when connectivity is restored.
     """
 
-    def __init__(self, hass, master_coordinator, register_addr, register_config, bit_config, bit_position):
+    def __init__(
+        self,
+        hass,
+        master_coordinator: "ModbusMasterCoordinator",
+        register_addr: int,
+        register_config: Dict[str, Any],
+        bit_config: Dict[str, Any],
+        bit_position: int,
+    ) -> None:
         """Initialize the bitmask switch.
 
         Args:

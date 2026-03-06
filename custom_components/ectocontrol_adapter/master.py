@@ -6,10 +6,13 @@ Modbus communication through a shared connection pool.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from .const import DEVICE_TYPE_NAMES, OPT_SLAVE
 from .registers import REG_DEFAULT_MAX_RETRIES, REG_DEFAULT_RETRY_DELAY, REG_STATUS_OFFSET, REG_STATUS_OK
+
+if TYPE_CHECKING:
+    from .pool import ModbusClientPool, PooledClient
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,7 +20,14 @@ _LOGGER = logging.getLogger(__name__)
 class ModbusMasterCoordinator:
     """Coordinator for Modbus operations using a shared connection pool."""
 
-    def __init__(self, hass, config_entry, pool, pool_key: str, pooled_client):
+    def __init__(
+        self,
+        hass,
+        config_entry,
+        pool: "ModbusClientPool",
+        pool_key: str,
+        pooled_client: "PooledClient",
+    ) -> None:
         """Initialize the Modbus master coordinator.
 
         Args:

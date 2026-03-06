@@ -5,6 +5,7 @@ gas and electric boilers via Modbus protocol.
 """
 
 import logging
+from typing import Any, Dict, List, Tuple, cast
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -45,7 +46,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Set up sensors from a config entry."""
-    config = config_entry.options or config_entry.data
+    config: Dict[str, Any] = dict(config_entry.options or config_entry.data)
 
     # Create device
     device_registry = dr.async_get(hass)
@@ -95,21 +96,21 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         # Get register configuration for this device type
         device_def = DEVICE_TYPE_DEFS.get(device_type_key)
         if device_def:
-            read_regs = device_def.get("read_registers", REGISTERS_R)
-            write_regs = device_def.get("write_registers", REGISTERS_W)
+            read_regs = cast(Dict[int, Dict[str, Any]], device_def.get("read_registers", REGISTERS_R))
+            write_regs = cast(Dict[int, Dict[str, Any]], device_def.get("write_registers", REGISTERS_W))
         else:
             # Fallback to default registers
             _LOGGER.warning("Unknown device type 0x%02X, using default register configuration", device_type)
-            read_regs = REGISTERS_R
-            write_regs = REGISTERS_W
+            read_regs = cast(Dict[int, Dict[str, Any]], REGISTERS_R)
+            write_regs = cast(Dict[int, Dict[str, Any]], REGISTERS_W)
     else:
         # Fallback to default registers if detection fails
         _LOGGER.warning("Device type detection failed, using default register configuration")
-        read_regs = REGISTERS_R
-        write_regs = REGISTERS_W
+        read_regs = cast(Dict[int, Dict[str, Any]], REGISTERS_R)
+        write_regs = cast(Dict[int, Dict[str, Any]], REGISTERS_W)
 
     # Group registers by scan interval
-    update_register_groups = {}
+    update_register_groups: Dict[int, List[Tuple[int, Dict[str, Any]]]] = {}
     for register_addr, config in read_regs.items():
         scan_interval = config.get("scan_interval", REG_DEFAULT_SCAN_INTERVAL)
         if scan_interval not in update_register_groups:
