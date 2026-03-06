@@ -6,7 +6,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .mixins import ModbusSensorMixin, ModbusUniqIdMixin
-from .registers import BM_BINARY, BM_CONNECTIVITY
+from .registers import BM_BINARY
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ class ModbusBinarySensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity
 
     @property
     def is_on(self):
-        """ Return True if the bits is set. """
+        """Return True if the bit is set."""
         if self.coordinator.data is None:
             return None
 
@@ -68,10 +68,6 @@ class ModbusBinarySensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity
         raw_value = self._get_raw_value(raw_data)
         if raw_value is None:
             return None
-
-        # BM_CONNECTIVITY type: return True when data is available (device connected)
-        if self.bitmask_config.get("type") == BM_CONNECTIVITY:
-            return True
 
         return bool(raw_value & self.bitmask)
 

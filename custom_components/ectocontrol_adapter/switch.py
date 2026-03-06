@@ -2,18 +2,14 @@ import logging
 from typing import Optional
 
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.const import Platform
-from homeassistant.helpers import entity_registry
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.event import async_call_later, async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import DOMAIN
 from .mixins import ModbusUniqIdMixin
-from .registers import SWITCH_INPUT, BITMASK_SWITCH_INPUT, REG_R_ADAPTER_STATUS
+from .registers import SWITCH_INPUT, BITMASK_SWITCH_INPUT
 
 _LOGGER = logging.getLogger(__name__)
-_SUBSCRIBE_ATTEMPTS_DELAY = 5
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -136,14 +132,13 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
 
         # HA is source of truth
         self._attr_is_on: Optional[bool] = None
-        self._connectivity_subscribed = False
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self._master_coordinator.config_entry.entry_id)}
         )
 
     async def async_added_to_hass(self):
-        """Restore state from persistence and subscribe to connectivity."""
+        """Restore state from persistence and write to device immediately."""
         await super().async_added_to_hass()
         last_state = await self.async_get_last_state()
 
@@ -153,47 +148,11 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
             elif last_state.state == "off":
                 self._attr_is_on = False
 
-        # Subscribe to connectivity sensor for stateless relay devices
-        async_call_later(
-            hass=self.hass,
-            delay=_SUBSCRIBE_ATTEMPTS_DELAY,
-            action=lambda _: self._subscribe_to_connectivity_with_retry()
-        )
-
-    def _subscribe_to_connectivity_with_retry(self, attempt=1, max_attempts=10):
-        """Subscribe to connectivity binary sensor updates."""
-        reg = entity_registry.async_get(self.hass)
-        sensor_unique_id = f"{self._unique_id_prefix}_connectivity_{REG_R_ADAPTER_STATUS:#06x}"
-        entity_id = reg.async_get_entity_id(Platform.BINARY_SENSOR, DOMAIN, sensor_unique_id)
-
-        if entity_id:
-            self.async_on_remove(
-                async_track_state_change_event(
-                    self.hass, entity_id, self._handle_connectivity_change))
-            self._connectivity_subscribed = True
-            _LOGGER.debug(f"Relay '{self._attr_translation_key}' subscribed to connectivity")
-        else:
-            if attempt < max_attempts:
-                async_call_later(
-                    hass=self.hass,
-                    delay=_SUBSCRIBE_ATTEMPTS_DELAY,
-                    action=lambda _: self._subscribe_to_connectivity_with_retry(attempt + 1, max_attempts)
-                )
-            else:
-                _LOGGER.warning(
-                    f"Relay '{self._attr_translation_key}' could not find connectivity sensor"
-                )
-
-    async def _handle_connectivity_change(self, event):
-        """Write relay state to device when connectivity is restored."""
-        new_state = event.data.get('new_state')
-        if new_state is None or new_state.state != "on":
-            return
-
-        # Connectivity restored - write current HA state to device
+        # If we have a known state from HA persistence, write it to device immediately
+        # This ensures state is restored on reboot without waiting for connectivity changes
         if self._attr_is_on is not None:
             _LOGGER.info(
-                f"Connectivity restored, syncing relay '{self._attr_translation_key}' "
+                f"Restoring relay '{self._attr_translation_key}' "
                 f"state={'ON' if self._attr_is_on else 'OFF'} to device"
             )
             await self._write_state_to_device(self._attr_is_on)
