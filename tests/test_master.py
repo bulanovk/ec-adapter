@@ -97,9 +97,7 @@ class TestModbusMasterCoordinator:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_write_registers_with_custom_status_register(
-        self, master, mock_modbus_client
-    ):
+    async def test_write_registers_with_custom_status_register(self, master, mock_modbus_client):
         """Test register write with custom status register."""
         mock_modbus_client.set_register(0x0010, 0x1234)
         mock_modbus_client.set_register(0x0050, REG_STATUS_OK)  # Custom status reg
@@ -112,9 +110,7 @@ class TestModbusMasterCoordinator:
 
         mock_modbus_client.write_registers = mock_write
 
-        result = await master.write_registers(
-            0x0010, [0x5678], status_register=0x0050
-        )
+        result = await master.write_registers(0x0010, [0x5678], status_register=0x0050)
 
         assert result is True
 
@@ -166,9 +162,7 @@ class TestModbusMasterCoordinator:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_write_register_bit_concurrent_operations(
-        self, master, mock_modbus_client
-    ):
+    async def test_write_register_bit_concurrent_operations(self, master, mock_modbus_client):
         """Test that concurrent bit operations on same register are serialized."""
         mock_modbus_client.set_register(0x0010, 0x0000)
 
@@ -250,16 +244,12 @@ class TestModbusMasterCoordinator:
         """Test _verify_write_status retries on non-OK status."""
         mock_modbus_client.set_register(0x0040, 0xFF)  # Non-OK status
 
-        result = await master._verify_write_status(
-            0x0040, REG_STATUS_OK, 3, 0.01  # Short delay for testing
-        )
+        result = await master._verify_write_status(0x0040, REG_STATUS_OK, 3, 0.01)  # Short delay for testing
 
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_verify_write_status_eventually_succeeds(
-        self, master, mock_modbus_client
-    ):
+    async def test_verify_write_status_eventually_succeeds(self, master, mock_modbus_client):
         """Test _verify_write_status succeeds after status changes to OK."""
         call_count = 0
 
@@ -278,9 +268,7 @@ class TestModbusMasterCoordinator:
 
         mock_modbus_client.read_holding_registers = mock_read
 
-        result = await master._verify_write_status(
-            0x0040, REG_STATUS_OK, 5, 0.01
-        )
+        result = await master._verify_write_status(0x0040, REG_STATUS_OK, 5, 0.01)
 
         assert result is True
         assert call_count == 3
@@ -301,9 +289,7 @@ class TestModbusMasterCoordinatorSlaveId:
         )
 
     @pytest.mark.asyncio
-    async def test_uses_options_slave_id(
-        self, master_with_options, mock_modbus_client
-    ):
+    async def test_uses_options_slave_id(self, master_with_options, mock_modbus_client):
         """Test that options slave ID is used instead of data slave ID."""
         mock_modbus_client.set_register(0x0010, 0x1234)
 

@@ -12,20 +12,17 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
-    """ Modbus data updater """
+    """Modbus data updater"""
 
     def __init__(
-            self,
-            hass: HomeAssistant,
-            config_entry,
-            master: ModbusMasterCoordinator,
-            registers,
-            scan_interval=REG_DEFAULT_SCAN_INTERVAL):
-        super().__init__(
-            hass,
-            _LOGGER,
-            name=DOMAIN,
-            update_interval=timedelta(seconds=scan_interval))
+        self,
+        hass: HomeAssistant,
+        config_entry,
+        master: ModbusMasterCoordinator,
+        registers,
+        scan_interval=REG_DEFAULT_SCAN_INTERVAL,
+    ):
+        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=scan_interval))
         self.hass = hass
         self.config_entry = config_entry
         self._config = config_entry.options or config_entry.data
@@ -50,13 +47,9 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
 
                 # Choose read method based on input_type
                 if input_type == "input":
-                    result = await self._master.read_input_registers(
-                        address=register,
-                        count=reg_config["count"])
+                    result = await self._master.read_input_registers(address=register, count=reg_config["count"])
                 else:
-                    result = await self._master.read_holding_registers(
-                        address=register,
-                        count=reg_config["count"])
+                    result = await self._master.read_holding_registers(address=register, count=reg_config["count"])
 
                 if result is None or result.isError():
                     _LOGGER.error("Modbus read error for register 0x%04X", register)

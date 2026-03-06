@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)",
+      "Bash(find D:\\\\projects\\\\ecto\\\\ec-adapter\\\\custom_components\\\\ectocontrol_adapter:*)",
+      "Bash(gh run:*)",
+      "Bash(mv:*)"
+    ]
+  }
+}

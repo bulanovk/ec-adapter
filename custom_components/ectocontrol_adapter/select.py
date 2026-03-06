@@ -12,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """ Set up select entities  """
+    """Set up select entities"""
     data = hass.data[DOMAIN][config_entry.entry_id]
     master_coordinator = data["master_coordinator"]
     write_registers = data["write_registers"]
@@ -27,7 +27,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class ModbusSelect(ModbusUniqIdMixin, SelectEntity, RestoreEntity):
-    """ Modbus Select entity """
+    """Modbus Select entity"""
 
     def __init__(self, hass, master_coordinator, register_addr, register_config):
         self.hass = hass
@@ -44,9 +44,7 @@ class ModbusSelect(ModbusUniqIdMixin, SelectEntity, RestoreEntity):
         self._attr_entity_category = register_config.get("category")
 
         # Device info
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)}
-        )
+        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
     async def async_added_to_hass(self):
         await super().async_added_to_hass()
@@ -56,13 +54,12 @@ class ModbusSelect(ModbusUniqIdMixin, SelectEntity, RestoreEntity):
             self._attr_current_option = last_state.state
 
     async def async_select_option(self, option: str) -> None:
-        """ Change the selected option """
+        """Change the selected option"""
         if option not in self.choices:
             raise Exception(f"Unknown option '{option}' for register={self.register_addr:#06x}")
 
         wrval = self.choices[option]
-        success = await self.coordinator.write_registers(
-            address=self.register_addr, values=[wrval])
+        success = await self.coordinator.write_registers(address=self.register_addr, values=[wrval])
 
         if success:
             self._attr_current_option = option

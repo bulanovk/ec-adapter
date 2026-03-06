@@ -34,24 +34,24 @@ class ModbusSensorMixin:
                 return raw_data[0] if raw_data else None
 
             # Convert registers to bytes
-            byte_data = b''
+            byte_data = b""
             for register in raw_data:
-                byte_data += register.to_bytes(2, byteorder='big')
+                byte_data += register.to_bytes(2, byteorder="big")
 
             # Check config count for one byte values
             if data_type in BYTE_TYPES and count > 1:
                 _LOGGER.error(
-                    "Invalid configuration for register %s: "
-                    "8-bit data types require count=1, got count=%d",
-                    self.register_addr, count
+                    "Invalid configuration for register %s: " "8-bit data types require count=1, got count=%d",
+                    self.register_addr,
+                    count,
                 )
                 return None
 
             struct_data_type = REG_TYPE_MAPPING[data_type]
             if data_type in BYTE_TYPES:  # for one byte values
-                value = struct.unpack(f'>{struct_data_type}', bytes([byte_data[1]]))[0]
+                value = struct.unpack(f">{struct_data_type}", bytes([byte_data[1]]))[0]
             else:
-                value = struct.unpack(f'>{struct_data_type}', byte_data)[0]
+                value = struct.unpack(f">{struct_data_type}", byte_data)[0]
 
             # Apply scaling if needed
             if scale != 1.0:

@@ -3,8 +3,7 @@ from homeassistant.components.button import ButtonDeviceClass
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.switch import SwitchDeviceClass  # noqa: F401
-from homeassistant.const import (
-    PERCENTAGE, UnitOfPressure, UnitOfTemperature, UnitOfTime, UnitOfVolumeFlowRate)
+from homeassistant.const import PERCENTAGE, UnitOfPressure, UnitOfTemperature, UnitOfTime, UnitOfVolumeFlowRate
 from homeassistant.helpers.entity import EntityCategory
 
 from .converters import uptime_to_boottime
@@ -13,22 +12,19 @@ from .converters import uptime_to_boottime
 # Register type maping for struct python module
 REG_TYPE_MAPPING = {
     # 8-bit types (single byte)
-    'uint8': 'B',
-    'int8': 'b',
-
+    "uint8": "B",
+    "int8": "b",
     # 16-bit types (single register)
-    'uint16': 'H',
-    'int16': 'h',
-
+    "uint16": "H",
+    "int16": "h",
     # 32-bit types (two registers)
-    'uint32': 'I',
-    'int32': 'i',
-    'float32': 'f',
-
+    "uint32": "I",
+    "int32": "i",
+    "float32": "f",
     # 64-bit types (four registers)
-    'uint64': 'Q',
-    'int64': 'q',
-    'float64': 'd',
+    "uint64": "Q",
+    "int64": "q",
+    "float64": "d",
 }
 
 # Bitmasks value types
@@ -44,7 +40,7 @@ SELECT_INPUT = "select"
 BITMASK_SWITCH_INPUT = "bitmask_switch"
 
 # One byte types
-BYTE_TYPES = ['int8', 'uint8']
+BYTE_TYPES = ["int8", "uint8"]
 
 # Default scan interval
 REG_DEFAULT_SCAN_INTERVAL = 15
@@ -107,7 +103,7 @@ REG_R_COMMAND_REPLY = 0x0081
 
 # Relay Module Registers (Device Types 0xC0, 0xC1)
 # Same register for read and write - RW holding register
-REG_RW_RELAY_CHANNELS = 0x0010    # Channel control/state (bitfield, RW)
+REG_RW_RELAY_CHANNELS = 0x0010  # Channel control/state (bitfield, RW)
 REG_RW_RELAY_TIMER_BASE = 0x0020  # Timer registers base (0x0020-0x0029)
 
 # Data types for unpack via python `struct` module
@@ -124,25 +120,17 @@ REGISTERS_R = {
                 "type": BM_VALUE,
                 "name": "last_reboot_code",
                 "category": EntityCategory.DIAGNOSTIC,
-                "icon": "mdi:code-braces-box"
+                "icon": "mdi:code-braces-box",
             },
             0x0700: {
                 "type": BM_VALUE,
                 "name": "adapter_bus",
                 "device_class": SensorDeviceClass.ENUM,
-                "choices": {
-                    0b00000000000: "Opentherm",
-                    0b00100000000: "eBus",
-                    0b01000000000: "Navien"
-                },
-                "icon": "mdi:alphabetical-variant"
+                "choices": {0b00000000000: "Opentherm", 0b00100000000: "eBus", 0b01000000000: "Navien"},
+                "icon": "mdi:alphabetical-variant",
             },
-            0x0800: {
-                "type": BM_BINARY,
-                "name": "connectivity",
-                "device_class": BinarySensorDeviceClass.CONNECTIVITY
-            }
-        }
+            0x0800: {"type": BM_BINARY, "name": "connectivity", "device_class": BinarySensorDeviceClass.CONNECTIVITY},
+        },
     },
     REG_R_ADAPTER_VERSION: {
         "name": "adapter_version_raw",
@@ -156,16 +144,16 @@ REGISTERS_R = {
                 "type": BM_VALUE,
                 "name": "adapter_sw_version",
                 "category": EntityCategory.DIAGNOSTIC,
-                "icon": "mdi:github"
+                "icon": "mdi:github",
             },
             0xFF00: {
                 "rshift": 8,
                 "type": BM_VALUE,
                 "name": "adapter_hw_version",
                 "category": EntityCategory.DIAGNOSTIC,
-                "icon": "mdi:chip"
-            }
-        }
+                "icon": "mdi:chip",
+            },
+        },
     },
     REG_R_ADAPTER_UPTIME: {
         "name": "adapter_uptime",
@@ -180,9 +168,9 @@ REGISTERS_R = {
             "uptime_to_boottime": {
                 "converter": uptime_to_boottime,
                 "name": "adapter_boot_time",
-                "device_class": SensorDeviceClass.TIMESTAMP
+                "device_class": SensorDeviceClass.TIMESTAMP,
             }
-        }
+        },
     },
     REG_R_COOLANT_MIN_TEMP: {
         "name": "coolant_min_temp",
@@ -192,7 +180,7 @@ REGISTERS_R = {
         "scan_interval": 60,
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "device_class": SensorDeviceClass.TEMPERATURE,
-        "category": EntityCategory.DIAGNOSTIC
+        "category": EntityCategory.DIAGNOSTIC,
     },
     REG_R_COOLANT_MAX_TEMP: {
         "name": "coolant_max_temp",
@@ -202,7 +190,7 @@ REGISTERS_R = {
         "scan_interval": 60,
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "device_class": SensorDeviceClass.TEMPERATURE,
-        "category": EntityCategory.DIAGNOSTIC
+        "category": EntityCategory.DIAGNOSTIC,
     },
     REG_R_DHW_MIN_TEMP: {
         "name": "dhw_min_temp",
@@ -212,7 +200,7 @@ REGISTERS_R = {
         "scan_interval": 60,
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "device_class": SensorDeviceClass.TEMPERATURE,
-        "category": EntityCategory.DIAGNOSTIC
+        "category": EntityCategory.DIAGNOSTIC,
     },
     REG_R_DHW_MAX_TEMP: {
         "name": "dhw_max_temp",
@@ -222,7 +210,7 @@ REGISTERS_R = {
         "scan_interval": 60,
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "device_class": SensorDeviceClass.TEMPERATURE,
-        "category": EntityCategory.DIAGNOSTIC
+        "category": EntityCategory.DIAGNOSTIC,
     },
     REG_R_COOLANT_TEMP: {
         "name": "coolant_temp",
@@ -233,7 +221,7 @@ REGISTERS_R = {
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "device_class": SensorDeviceClass.TEMPERATURE,
         "scale": 0.1,
-        "icon": "mdi:coolant-temperature"
+        "icon": "mdi:coolant-temperature",
     },
     REG_R_DHW_TEMP: {
         "name": "dhw_temp",
@@ -244,7 +232,7 @@ REGISTERS_R = {
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "device_class": SensorDeviceClass.TEMPERATURE,
         "scale": 0.1,
-        "icon": "mdi:thermometer-water"
+        "icon": "mdi:thermometer-water",
     },
     REG_R_CURRENT_PRESSURE: {
         "name": "current_pressure",
@@ -254,7 +242,7 @@ REGISTERS_R = {
         "scan_interval": 15,
         "unit_of_measurement": UnitOfPressure.BAR,
         "device_class": SensorDeviceClass.PRESSURE,
-        "scale": 0.1
+        "scale": 0.1,
     },
     REG_R_CURRENT_VOLUME_FLOW_RATE: {
         "name": "current_flow_rate",
@@ -264,7 +252,7 @@ REGISTERS_R = {
         "scan_interval": 15,
         "unit_of_measurement": UnitOfVolumeFlowRate.LITERS_PER_MINUTE,
         "device_class": SensorDeviceClass.VOLUME_FLOW_RATE,
-        "scale": 0.1
+        "scale": 0.1,
     },
     REG_R_BURNER_MODULATION: {
         "name": "burner_modulation",
@@ -273,7 +261,7 @@ REGISTERS_R = {
         "input_type": "holding",
         "scan_interval": 5,
         "unit_of_measurement": PERCENTAGE,
-        "device_class": SensorDeviceClass.POWER_FACTOR
+        "device_class": SensorDeviceClass.POWER_FACTOR,
     },
     REG_R_BURNER_STATUS: {
         "name": "burner_status_raw",
@@ -287,21 +275,21 @@ REGISTERS_R = {
                 "type": BM_BINARY,
                 "name": "burner_status",
                 "device_class": BinarySensorDeviceClass.RUNNING,
-                "icon": "mdi:fire"
+                "icon": "mdi:fire",
             },
             0b010: {
                 "type": BM_BINARY,
                 "name": "burner_heating",
                 "device_class": BinarySensorDeviceClass.RUNNING,
-                "icon": "mdi:heating-coil"
+                "icon": "mdi:heating-coil",
             },
             0b100: {
                 "type": BM_BINARY,
                 "name": "burner_dhw",
                 "device_class": BinarySensorDeviceClass.RUNNING,
-                "icon": "mdi:faucet"
-            }
-        }
+                "icon": "mdi:faucet",
+            },
+        },
     },
     REG_R_ERROR_CODE_MAIN: {
         "name": "main_error_code",
@@ -309,7 +297,7 @@ REGISTERS_R = {
         "data_type": "uint16",
         "input_type": "holding",
         "scan_interval": 60,
-        "category": EntityCategory.DIAGNOSTIC
+        "category": EntityCategory.DIAGNOSTIC,
     },
     REG_R_ERROR_CODE_ADD: {
         "name": "add_error_code",
@@ -317,7 +305,7 @@ REGISTERS_R = {
         "data_type": "uint16",
         "input_type": "holding",
         "scan_interval": 60,
-        "category": EntityCategory.DIAGNOSTIC
+        "category": EntityCategory.DIAGNOSTIC,
     },
     REG_R_OUTER_TEMP: {
         "name": "outer_temp",
@@ -327,7 +315,7 @@ REGISTERS_R = {
         "scan_interval": 15,
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "device_class": SensorDeviceClass.TEMPERATURE,
-        "icon": "mdi:home-thermometer"
+        "icon": "mdi:home-thermometer",
     },
     REG_R_VENDOR_CODE: {
         "name": "vendor_code",
@@ -335,7 +323,7 @@ REGISTERS_R = {
         "data_type": "uint16",
         "input_type": "holding",
         "scan_interval": 300,
-        "category": EntityCategory.DIAGNOSTIC
+        "category": EntityCategory.DIAGNOSTIC,
     },
     REG_R_MODEL_CODE: {
         "name": "model_code",
@@ -343,7 +331,7 @@ REGISTERS_R = {
         "data_type": "uint16",
         "input_type": "holding",
         "scan_interval": 300,
-        "category": EntityCategory.DIAGNOSTIC
+        "category": EntityCategory.DIAGNOSTIC,
     },
     REG_R_OPENTHERM_ERRORS: {
         "name": "opentherm_errors",
@@ -357,40 +345,40 @@ REGISTERS_R = {
                 "type": BM_BINARY,
                 "name": "opentherm_maintenance_required",
                 "device_class": BinarySensorDeviceClass.PROBLEM,
-                "category": EntityCategory.DIAGNOSTIC
+                "category": EntityCategory.DIAGNOSTIC,
             },
             0x0002: {
                 "type": BM_BINARY,
                 "name": "opentherm_boiler_blocked",
                 "device_class": BinarySensorDeviceClass.PROBLEM,
-                "category": EntityCategory.DIAGNOSTIC
+                "category": EntityCategory.DIAGNOSTIC,
             },
             0x0004: {
                 "type": BM_BINARY,
                 "name": "opentherm_low_pressure",
                 "device_class": BinarySensorDeviceClass.PROBLEM,
-                "category": EntityCategory.DIAGNOSTIC
+                "category": EntityCategory.DIAGNOSTIC,
             },
             0x0008: {
                 "type": BM_BINARY,
                 "name": "opentherm_ignition_error",
                 "device_class": BinarySensorDeviceClass.PROBLEM,
-                "category": EntityCategory.DIAGNOSTIC
+                "category": EntityCategory.DIAGNOSTIC,
             },
             0x0010: {
                 "type": BM_BINARY,
                 "name": "opentherm_low_air_pressure",
                 "device_class": BinarySensorDeviceClass.PROBLEM,
-                "category": EntityCategory.DIAGNOSTIC
+                "category": EntityCategory.DIAGNOSTIC,
             },
             0x0020: {
                 "type": BM_BINARY,
                 "name": "opentherm_coolant_overheating",
                 "device_class": BinarySensorDeviceClass.PROBLEM,
-                "category": EntityCategory.DIAGNOSTIC
-            }
-        }
-    }
+                "category": EntityCategory.DIAGNOSTIC,
+            },
+        },
+    },
 }
 
 # Contact Splitter Input Registers (function code 0x04)
@@ -426,7 +414,7 @@ REGISTERS_INPUT_8CH = {
             0x2000: {"type": BM_BINARY, "name": "contact_6", "device_class": BinarySensorDeviceClass.OPENING},
             0x4000: {"type": BM_BINARY, "name": "contact_7", "device_class": BinarySensorDeviceClass.OPENING},
             0x8000: {"type": BM_BINARY, "name": "contact_8", "device_class": BinarySensorDeviceClass.OPENING},
-        }
+        },
     }
 }
 
@@ -450,7 +438,7 @@ REGISTERS_INPUT_10CH = {
             0x8000: {"type": BM_BINARY, "name": "contact_8", "device_class": BinarySensorDeviceClass.OPENING},
             0x0001: {"type": BM_BINARY, "name": "contact_9", "device_class": BinarySensorDeviceClass.OPENING},
             0x0002: {"type": BM_BINARY, "name": "contact_10", "device_class": BinarySensorDeviceClass.OPENING},
-        }
+        },
     }
 }
 
@@ -498,7 +486,7 @@ REGISTERS_RELAY_W = {
             # Channels 9-10 (bits 0-1, LSB byte)
             {"bit": 0, "name": "relay_9"},
             {"bit": 1, "name": "relay_10"},
-        ]
+        ],
     },
 }
 
@@ -506,7 +494,8 @@ REGISTERS_RELAY_W = {
 # Timer value in seconds, scale=2 converts to 500ms units
 # Max timer: 32767 * 0.5 = 16383.5 seconds
 REGISTERS_RELAY_TIMERS_10CH = {
-    REG_RW_RELAY_TIMER_BASE + 0: {
+    REG_RW_RELAY_TIMER_BASE
+    + 0: {
         "name": "relay_1_timer",
         "input_type": NUMBER_INPUT,
         "min_value": 0,
@@ -516,7 +505,8 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "unit_of_measurement": UnitOfTime.SECONDS,
         "skip_verify": True,  # Relay timers have no status register
     },
-    REG_RW_RELAY_TIMER_BASE + 1: {
+    REG_RW_RELAY_TIMER_BASE
+    + 1: {
         "name": "relay_2_timer",
         "input_type": NUMBER_INPUT,
         "min_value": 0,
@@ -526,7 +516,8 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "unit_of_measurement": UnitOfTime.SECONDS,
         "skip_verify": True,
     },
-    REG_RW_RELAY_TIMER_BASE + 2: {
+    REG_RW_RELAY_TIMER_BASE
+    + 2: {
         "name": "relay_3_timer",
         "input_type": NUMBER_INPUT,
         "min_value": 0,
@@ -536,7 +527,8 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "unit_of_measurement": UnitOfTime.SECONDS,
         "skip_verify": True,
     },
-    REG_RW_RELAY_TIMER_BASE + 3: {
+    REG_RW_RELAY_TIMER_BASE
+    + 3: {
         "name": "relay_4_timer",
         "input_type": NUMBER_INPUT,
         "min_value": 0,
@@ -546,7 +538,8 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "unit_of_measurement": UnitOfTime.SECONDS,
         "skip_verify": True,
     },
-    REG_RW_RELAY_TIMER_BASE + 4: {
+    REG_RW_RELAY_TIMER_BASE
+    + 4: {
         "name": "relay_5_timer",
         "input_type": NUMBER_INPUT,
         "min_value": 0,
@@ -556,7 +549,8 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "unit_of_measurement": UnitOfTime.SECONDS,
         "skip_verify": True,
     },
-    REG_RW_RELAY_TIMER_BASE + 5: {
+    REG_RW_RELAY_TIMER_BASE
+    + 5: {
         "name": "relay_6_timer",
         "input_type": NUMBER_INPUT,
         "min_value": 0,
@@ -566,7 +560,8 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "unit_of_measurement": UnitOfTime.SECONDS,
         "skip_verify": True,
     },
-    REG_RW_RELAY_TIMER_BASE + 6: {
+    REG_RW_RELAY_TIMER_BASE
+    + 6: {
         "name": "relay_7_timer",
         "input_type": NUMBER_INPUT,
         "min_value": 0,
@@ -576,7 +571,8 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "unit_of_measurement": UnitOfTime.SECONDS,
         "skip_verify": True,
     },
-    REG_RW_RELAY_TIMER_BASE + 7: {
+    REG_RW_RELAY_TIMER_BASE
+    + 7: {
         "name": "relay_8_timer",
         "input_type": NUMBER_INPUT,
         "min_value": 0,
@@ -586,7 +582,8 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "unit_of_measurement": UnitOfTime.SECONDS,
         "skip_verify": True,
     },
-    REG_RW_RELAY_TIMER_BASE + 8: {
+    REG_RW_RELAY_TIMER_BASE
+    + 8: {
         "name": "relay_9_timer",
         "input_type": NUMBER_INPUT,
         "min_value": 0,
@@ -596,7 +593,8 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "unit_of_measurement": UnitOfTime.SECONDS,
         "skip_verify": True,
     },
-    REG_RW_RELAY_TIMER_BASE + 9: {
+    REG_RW_RELAY_TIMER_BASE
+    + 9: {
         "name": "relay_10_timer",
         "input_type": NUMBER_INPUT,
         "min_value": 0,
@@ -630,11 +628,8 @@ REGISTERS_W = {
         "input_type": SELECT_INPUT,
         "icon": "mdi:alarm-panel-outline",
         "initial_value": "adapter",
-        "choices": {
-            "adapter": 0,
-            "boiler_panel": 1
-        },
-        "category": EntityCategory.CONFIG
+        "choices": {"adapter": 0, "boiler_panel": 1},
+        "category": EntityCategory.CONFIG,
     },
     REG_W_COOLANT_TEMP: {
         "name": "coolant_temp",
@@ -647,7 +642,7 @@ REGISTERS_W = {
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "icon": "mdi:coolant-temperature",
         "device_class": NumberDeviceClass.TEMPERATURE,
-        "write_after_connected": (REG_R_ADAPTER_STATUS, "connectivity")
+        "write_after_connected": (REG_R_ADAPTER_STATUS, "connectivity"),
     },
     REG_W_COOLANT_EMERGENCY_TEMP: {
         "name": "coolant_emergency_temp",
@@ -659,7 +654,7 @@ REGISTERS_W = {
         "input_type": NUMBER_INPUT,
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "icon": "mdi:thermometer-alert",
-        "device_class": NumberDeviceClass.TEMPERATURE
+        "device_class": NumberDeviceClass.TEMPERATURE,
     },
     REG_W_COOLANT_MIN_TEMP: {
         "name": "coolant_min_temp",
@@ -672,7 +667,7 @@ REGISTERS_W = {
         "icon": "mdi:thermometer-minus",
         "device_class": NumberDeviceClass.TEMPERATURE,
         "category": EntityCategory.CONFIG,
-        "write_after_connected": (REG_R_ADAPTER_STATUS, "connectivity")
+        "write_after_connected": (REG_R_ADAPTER_STATUS, "connectivity"),
     },
     REG_W_COOLANT_MAX_TEMP: {
         "name": "coolant_max_temp",
@@ -685,7 +680,7 @@ REGISTERS_W = {
         "icon": "mdi:thermometer-plus",
         "device_class": NumberDeviceClass.TEMPERATURE,
         "category": EntityCategory.CONFIG,
-        "write_after_connected": (REG_R_ADAPTER_STATUS, "connectivity")
+        "write_after_connected": (REG_R_ADAPTER_STATUS, "connectivity"),
     },
     REG_W_DHW_MIN_TEMP: {
         "name": "dhw_min_temp",
@@ -698,7 +693,7 @@ REGISTERS_W = {
         "icon": "mdi:thermometer-minus",
         "device_class": NumberDeviceClass.TEMPERATURE,
         "category": EntityCategory.CONFIG,
-        "write_after_connected": (REG_R_ADAPTER_STATUS, "connectivity")
+        "write_after_connected": (REG_R_ADAPTER_STATUS, "connectivity"),
     },
     REG_W_DHW_MAX_TEMP: {
         "name": "dhw_max_temp",
@@ -711,7 +706,7 @@ REGISTERS_W = {
         "icon": "mdi:thermometer-plus",
         "device_class": NumberDeviceClass.TEMPERATURE,
         "category": EntityCategory.CONFIG,
-        "write_after_connected": (REG_R_ADAPTER_STATUS, "connectivity")
+        "write_after_connected": (REG_R_ADAPTER_STATUS, "connectivity"),
     },
     REG_W_DHW_TEMP: {
         "name": "dhw_temp",
@@ -722,7 +717,7 @@ REGISTERS_W = {
         "input_type": NUMBER_INPUT,
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "icon": "mdi:thermometer-water",
-        "device_class": NumberDeviceClass.TEMPERATURE
+        "device_class": NumberDeviceClass.TEMPERATURE,
     },
     REG_W_BURNER_MODULATION: {
         "name": "burner_modulation",
@@ -733,7 +728,7 @@ REGISTERS_W = {
         "input_type": NUMBER_INPUT,
         "unit_of_measurement": PERCENTAGE,
         "icon": "mdi:gas-burner",
-        "device_class": NumberDeviceClass.POWER_FACTOR
+        "device_class": NumberDeviceClass.POWER_FACTOR,
     },
     REG_W_MODE: {
         "name": "work_mode",
@@ -746,8 +741,8 @@ REGISTERS_W = {
             "heating_only": 0b001,
             "second_only": 0b100,
             "heating_dwh": 0b011,
-            "heating_second": 0b101
-        }
+            "heating_second": 0b101,
+        },
     },
     # Bitmask switch - multiple switches from one register
     REG_W_CIRCUIT_ENABLE: {
@@ -769,7 +764,7 @@ REGISTERS_W = {
                 "name": "second_circuit_enable",
                 "icon": "mdi:heating-coil",
             },
-        ]
+        ],
     },
     REG_W_COMMAND: {
         "name": "command",
@@ -787,9 +782,9 @@ REGISTERS_W = {
                 "value": 3,
                 "icon": "mdi:lock-reset",
                 "device_class": ButtonDeviceClass.RESTART,
-            }
-        ]
-    }
+            },
+        ],
+    },
 }
 
 # Import device type constants from const.py

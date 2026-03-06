@@ -6,12 +6,7 @@ from .const import (
     OPT_SLAVE,
     DEVICE_TYPE_NAMES,
 )
-from .registers import (
-    REG_DEFAULT_MAX_RETRIES,
-    REG_DEFAULT_RETRY_DELAY,
-    REG_STATUS_OFFSET,
-    REG_STATUS_OK
-)
+from .registers import REG_DEFAULT_MAX_RETRIES, REG_DEFAULT_RETRY_DELAY, REG_STATUS_OFFSET, REG_STATUS_OK
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,8 +34,7 @@ class ModbusMasterCoordinator:
         """
         # Read registers 0x0000-0x0003 (generic device info)
         result = await self._pooled_client.submit_operation(
-            "read_holding_registers",
-            {"address": 0x0000, "count": 4, "device_id": self._slave_id}
+            "read_holding_registers", {"address": 0x0000, "count": 4, "device_id": self._slave_id}
         )
 
         if result is None or result.isError() or len(result.registers) < 4:
@@ -64,14 +58,10 @@ class ModbusMasterCoordinator:
             device_type,
             DEVICE_TYPE_NAMES.get(device_type, "Unknown"),
             device_uid,
-            channel_count
+            channel_count,
         )
 
-        return {
-            "device_type": device_type,
-            "device_uid": device_uid,
-            "channel_count": channel_count
-        }
+        return {"device_type": device_type, "device_uid": device_uid, "channel_count": channel_count}
 
     def _get_register_lock(self, address: int) -> asyncio.Lock:
         """Get or create a lock for a specific register address."""
@@ -115,28 +105,21 @@ class ModbusMasterCoordinator:
     async def read_holding_registers(self, address: int, count: int) -> Any:
         """Read holding registers from the device."""
         return await self._pooled_client.submit_operation(
-            "read_holding_registers",
-            {"address": address, "count": count, "device_id": self._slave_id}
+            "read_holding_registers", {"address": address, "count": count, "device_id": self._slave_id}
         )
 
     async def read_input_registers(self, address: int, count: int) -> Any:
         """Read input registers from the device (function code 0x04)."""
         return await self._pooled_client.submit_operation(
-            "read_input_registers",
-            {"address": address, "count": count, "device_id": self._slave_id}
+            "read_input_registers", {"address": address, "count": count, "device_id": self._slave_id}
         )
 
     async def write_registers(
-        self,
-        address: int,
-        values: List[int],
-        status_register: Optional[int] = None,
-        skip_verify: bool = False
+        self, address: int, values: List[int], status_register: Optional[int] = None, skip_verify: bool = False
     ) -> bool:
         """Write registers to the device with optional status verification."""
         result = await self._pooled_client.submit_operation(
-            "write_registers",
-            {"address": address, "values": values, "device_id": self._slave_id}
+            "write_registers", {"address": address, "values": values, "device_id": self._slave_id}
         )
 
         if result is None or result.isError():
@@ -147,30 +130,20 @@ class ModbusMasterCoordinator:
             return True
 
         # Verify write status
-        status_reg = (
-            status_register or
-            address + REG_STATUS_OFFSET
-        )
+        status_reg = status_register or address + REG_STATUS_OFFSET
 
         return await self._verify_write_status(
-            status_reg,
-            REG_STATUS_OK,
-            REG_DEFAULT_MAX_RETRIES,
-            REG_DEFAULT_RETRY_DELAY
+            status_reg, REG_STATUS_OK, REG_DEFAULT_MAX_RETRIES, REG_DEFAULT_RETRY_DELAY
         )
 
     async def _verify_write_status(
-            self,
-            status_register: int,
-            success_status: int,
-            max_retries: int,
-            retry_delay: float) -> bool:
+        self, status_register: int, success_status: int, max_retries: int, retry_delay: float
+    ) -> bool:
         """Check write status by polling status register."""
         for attempt in range(max_retries):
             try:
                 result = await self._pooled_client.submit_operation(
-                    "read_holding_registers",
-                    {"address": status_register, "count": 1, "device_id": self._slave_id}
+                    "read_holding_registers", {"address": status_register, "count": 1, "device_id": self._slave_id}
                 )
                 if result is not None:
                     if result.isError():

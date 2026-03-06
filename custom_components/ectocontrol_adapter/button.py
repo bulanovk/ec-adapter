@@ -11,7 +11,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """ Set up select entities  """
+    """Set up select entities"""
     data = hass.data[DOMAIN][config_entry.entry_id]
     master_coordinator = data["master_coordinator"]
     write_registers = data["write_registers"]
@@ -24,19 +24,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                 continue
 
             for button_config in register_config["buttons"]:
-                entities.append(ModbusButton(
-                    hass,
-                    master_coordinator,
-                    register_addr,
-                    register_config,
-                    button_config
-                ))
+                entities.append(ModbusButton(hass, master_coordinator, register_addr, register_config, button_config))
 
     async_add_entities(entities)
 
 
 class ModbusButton(ModbusUniqIdMixin, ButtonEntity):
-    """ Modbus Button entity """
+    """Modbus Button entity"""
 
     def __init__(self, hass, master_coordinator, register_addr, register_config, button_config):
         self.hass = hass
@@ -52,20 +46,17 @@ class ModbusButton(ModbusUniqIdMixin, ButtonEntity):
         self._attr_entity_category = button_config.get("category") or register_config.get("category")
 
         # Device info
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)}
-        )
+        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
     async def async_press(self) -> None:
-        """ Press button """
+        """Press button"""
         wrval = self.button_config.get("value")
         if not isinstance(wrval, int):
             raise Exception(f"Can not write value '{wrval}' to register={self.register_addr:#06x}")
 
         success = await self.coordinator.write_registers(
-            address=self.register_addr,
-            values=[wrval],
-            status_register=self.register_config.get("status_register"))
+            address=self.register_addr, values=[wrval], status_register=self.register_config.get("status_register")
+        )
 
         if success:
             _LOGGER.info(f"Successfully set '{self._attr_translation_key}' to '{wrval}'")

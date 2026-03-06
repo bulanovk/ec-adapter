@@ -12,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """ Set up sensors. """
+    """Set up sensors."""
     data = hass.data[DOMAIN][config_entry.entry_id]
     coordinators = data["update_coordinators"]
     register_groups = data["update_register_groups"]
@@ -34,7 +34,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class ModbusBinarySensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, BinarySensorEntity):
-    """ Binary sensor for bitmasks values. """
+    """Binary sensor for bitmasks values."""
 
     def __init__(self, coordinator, register_addr, register_config, bitmask):
         super().__init__(coordinator)
@@ -51,9 +51,7 @@ class ModbusBinarySensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity
         self._attr_entity_category = self.bitmask_config.get("category")
 
         # Device info
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)}
-        )
+        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
     @property
     def is_on(self):

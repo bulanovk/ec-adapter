@@ -14,8 +14,14 @@ POOL_KEY = "pool"
 def _get_pool_key(config: Dict[str, Any]) -> str:
     """Generate a unique key for connection pooling based on connection config."""
     from .const import (
-        OPT_MODBUS_TYPE, OPT_DEVICE, OPT_BAUDRATE, OPT_PARITY,
-        OPT_STOPBITS, OPT_BYTESIZE, OPT_HOST, OPT_PORT
+        OPT_MODBUS_TYPE,
+        OPT_DEVICE,
+        OPT_BAUDRATE,
+        OPT_PARITY,
+        OPT_STOPBITS,
+        OPT_BYTESIZE,
+        OPT_HOST,
+        OPT_PORT,
     )
 
     modbus_type = config.get(OPT_MODBUS_TYPE, "")
@@ -140,21 +146,15 @@ class PooledClient:
         """Execute operation on the client."""
         if op == "read_holding_registers":
             return await self._client.read_holding_registers(
-                address=data["address"],
-                count=data["count"],
-                device_id=data["device_id"]
+                address=data["address"], count=data["count"], device_id=data["device_id"]
             )
         elif op == "read_input_registers":
             return await self._client.read_input_registers(
-                address=data["address"],
-                count=data["count"],
-                device_id=data["device_id"]
+                address=data["address"], count=data["count"], device_id=data["device_id"]
             )
         elif op == "write_registers":
             return await self._client.write_registers(
-                address=data["address"],
-                values=data["values"],
-                device_id=data["device_id"]
+                address=data["address"], values=data["values"], device_id=data["device_id"]
             )
         else:
             raise ValueError(f"Unknown operation type: {op}")

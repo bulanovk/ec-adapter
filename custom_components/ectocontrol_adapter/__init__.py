@@ -6,16 +6,18 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
-from .const import DOMAIN, OPT_NAME, DEVICE_TYPE_NAMES, DEVICE_TYPE_CONTACT_SPLITTER, DEVICE_TYPE_RELAY_BLOCK_2CH, DEVICE_TYPE_RELAY_BLOCK_10CH
+from .const import (
+    DOMAIN,
+    OPT_NAME,
+    DEVICE_TYPE_NAMES,
+    DEVICE_TYPE_CONTACT_SPLITTER,
+    DEVICE_TYPE_RELAY_BLOCK_2CH,
+    DEVICE_TYPE_RELAY_BLOCK_10CH,
+)
 from .coordinator import ModbusDataUpdateCoordinator
 from .master import ModbusMasterCoordinator
 from .pool import ModbusClientPool, POOL_KEY
-from .registers import (
-    REGISTERS_R,
-    REGISTERS_W,
-    REG_DEFAULT_SCAN_INTERVAL,
-    DEVICE_TYPE_DEFS
-)
+from .registers import REGISTERS_R, REGISTERS_W, REG_DEFAULT_SCAN_INTERVAL, DEVICE_TYPE_DEFS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,7 +27,7 @@ _PLATFORMS = [
     Platform.NUMBER,
     Platform.SELECT,
     Platform.SENSOR,
-    Platform.SWITCH
+    Platform.SWITCH,
 ]
 
 
@@ -37,7 +39,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    """ Set up sensors from a config entry. """
+    """Set up sensors from a config entry."""
     config = config_entry.options or config_entry.data
 
     # Create device
@@ -46,7 +48,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         config_entry_id=config_entry.entry_id,
         identifiers={(DOMAIN, config_entry.entry_id)},
         name=config.get(OPT_NAME) or config_entry.data.get(OPT_NAME),
-        manufacturer="ectoControl"
+        manufacturer="ectoControl",
     )
 
     # Acquire a pooled client connection
@@ -55,11 +57,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     # Create master coordinator with pooled client
     master_coordinator = ModbusMasterCoordinator(
-        hass=hass,
-        config_entry=config_entry,
-        pool=pool,
-        pool_key=pool_key,
-        pooled_client=pooled_client
+        hass=hass, config_entry=config_entry, pool=pool, pool_key=pool_key, pooled_client=pooled_client
     )
 
     # Detect device type
@@ -86,7 +84,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         _LOGGER.info(
             "Detected device type: 0x%02X (%s)",
             device_type,
-            DEVICE_TYPE_NAMES.get(device_type_key, DEVICE_TYPE_NAMES.get(device_type, "Unknown"))
+            DEVICE_TYPE_NAMES.get(device_type_key, DEVICE_TYPE_NAMES.get(device_type, "Unknown")),
         )
 
         # Get register configuration for this device type
@@ -96,10 +94,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
             write_regs = device_def.get("write_registers", REGISTERS_W)
         else:
             # Fallback to default registers
-            _LOGGER.warning(
-                "Unknown device type 0x%02X, using default register configuration",
-                device_type
-            )
+            _LOGGER.warning("Unknown device type 0x%02X, using default register configuration", device_type)
             read_regs = REGISTERS_R
             write_regs = REGISTERS_W
     else:
@@ -124,7 +119,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
             config_entry=config_entry,
             master=master_coordinator,
             registers=registers,
-            scan_interval=scan_interval
+            scan_interval=scan_interval,
         )
 
         # Fetch initial data
@@ -137,7 +132,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         "update_coordinators": update_coordinators,
         "update_register_groups": update_register_groups,
         "write_registers": write_regs,
-        "pool_key": pool_key
+        "pool_key": pool_key,
     }
 
     # Set up sensors
@@ -147,12 +142,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
 
 async def async_update_options(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
-    """ Update options for entry that was configured via user interface. """
+    """Update options for entry that was configured via user interface."""
     await hass.config_entries.async_reload(config_entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    """ Unload a config entry. """
+    """Unload a config entry."""
     await hass.config_entries.async_unload_platforms(config_entry, _PLATFORMS)
 
     entry_data = hass.data[DOMAIN][config_entry.entry_id]

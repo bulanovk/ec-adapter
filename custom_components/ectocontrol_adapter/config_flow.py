@@ -12,7 +12,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
     TextSelector,
     TextSelectorConfig,
-    TextSelectorType
+    TextSelectorType,
 )
 
 import voluptuous as vol
@@ -28,54 +28,55 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def create_schema(hass, config_entry=None, user_input=None, type="init"):
-    """ Common schema for ConfigFlow and OptionsFlow."""
+    """Common schema for ConfigFlow and OptionsFlow."""
 
     if type == "serial":
-        return vol.Schema({
-            # Serial settings
-            vol.Required(OPT_DEVICE, default=DEFAULT_DEVICE):
-                TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
-
-            vol.Required(OPT_BAUDRATE, default=str(DEFAULT_SERIAL_BAUDRATE)):
-                SelectSelector(SelectSelectorConfig(
-                    options=SERIAL_BAUDRATES, mode=SelectSelectorMode.DROPDOWN)),
-
-            vol.Required(OPT_BYTESIZE, default=str(DEFAULT_SERIAL_BYTESIZE)):
-                SelectSelector(SelectSelectorConfig(
-                    options=SERIAL_BYTESIZES, mode=SelectSelectorMode.DROPDOWN)),
-
-            vol.Required(OPT_PARITY, default=DEFAULT_PARITY):
-                SelectSelector(SelectSelectorConfig(
-                    options=SERIAL_PARITIES, mode=SelectSelectorMode.DROPDOWN)),
-
-            vol.Required(OPT_STOPBITS, default=str(DEFAULT_STOPBITS)):
-                SelectSelector(SelectSelectorConfig(
-                    options=SERIAL_STOPBITS, mode=SelectSelectorMode.DROPDOWN)),
-        })
+        return vol.Schema(
+            {
+                # Serial settings
+                vol.Required(OPT_DEVICE, default=DEFAULT_DEVICE): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.TEXT)
+                ),
+                vol.Required(OPT_BAUDRATE, default=str(DEFAULT_SERIAL_BAUDRATE)): SelectSelector(
+                    SelectSelectorConfig(options=SERIAL_BAUDRATES, mode=SelectSelectorMode.DROPDOWN)
+                ),
+                vol.Required(OPT_BYTESIZE, default=str(DEFAULT_SERIAL_BYTESIZE)): SelectSelector(
+                    SelectSelectorConfig(options=SERIAL_BYTESIZES, mode=SelectSelectorMode.DROPDOWN)
+                ),
+                vol.Required(OPT_PARITY, default=DEFAULT_PARITY): SelectSelector(
+                    SelectSelectorConfig(options=SERIAL_PARITIES, mode=SelectSelectorMode.DROPDOWN)
+                ),
+                vol.Required(OPT_STOPBITS, default=str(DEFAULT_STOPBITS)): SelectSelector(
+                    SelectSelectorConfig(options=SERIAL_STOPBITS, mode=SelectSelectorMode.DROPDOWN)
+                ),
+            }
+        )
     elif type in ("tcp", "udp", "rtuovertcp"):
-        return vol.Schema({
-            # Host + Port settings
-            vol.Required(OPT_HOST): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
-
-            vol.Required(OPT_PORT, default=DEFAULT_PORT):
-                NumberSelector(NumberSelectorConfig(min=1, max=65535, mode=NumberSelectorMode.BOX)),
-
-        })
+        return vol.Schema(
+            {
+                # Host + Port settings
+                vol.Required(OPT_HOST): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
+                vol.Required(OPT_PORT, default=DEFAULT_PORT): NumberSelector(
+                    NumberSelectorConfig(min=1, max=65535, mode=NumberSelectorMode.BOX)
+                ),
+            }
+        )
     else:
-        return vol.Schema({
-            vol.Required(OPT_NAME): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
-
-            # Settings
-            vol.Required(OPT_RESPONSE_TIMEOUT, default=DEFAULT_RESPONSE_TIMEOUT):
-                NumberSelector(NumberSelectorConfig(min=1, max=10, mode=NumberSelectorMode.BOX)),
-
-            vol.Required(OPT_MODBUS_TYPE, default=DEFAULT_MODBUS_TYPE):
-                SelectSelector(SelectSelectorConfig(
-                    options=MODBUS_TYPES, mode=SelectSelectorMode.DROPDOWN)),
-
-            vol.Required(OPT_SLAVE, default=DEFAULT_SLAVE_ID):
-                NumberSelector(NumberSelectorConfig(min=0, max=248, mode=NumberSelectorMode.BOX)),
-        })
+        return vol.Schema(
+            {
+                vol.Required(OPT_NAME): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
+                # Settings
+                vol.Required(OPT_RESPONSE_TIMEOUT, default=DEFAULT_RESPONSE_TIMEOUT): NumberSelector(
+                    NumberSelectorConfig(min=1, max=10, mode=NumberSelectorMode.BOX)
+                ),
+                vol.Required(OPT_MODBUS_TYPE, default=DEFAULT_MODBUS_TYPE): SelectSelector(
+                    SelectSelectorConfig(options=MODBUS_TYPES, mode=SelectSelectorMode.DROPDOWN)
+                ),
+                vol.Required(OPT_SLAVE, default=DEFAULT_SLAVE_ID): NumberSelector(
+                    NumberSelectorConfig(min=0, max=248, mode=NumberSelectorMode.BOX)
+                ),
+            }
+        )
 
 
 async def check_user_input(user_input, pool: ModbusClientPool = None):
@@ -101,8 +102,7 @@ async def check_user_input(user_input, pool: ModbusClientPool = None):
             else:
                 # Read device descriptor to validate connectivity
                 device_info = await pooled_client.submit_operation(
-                    "read_holding_registers",
-                    {"address": REG_DEVICE_DESCRIPTOR, "count": 1, "device_id": slave_id}
+                    "read_holding_registers", {"address": REG_DEVICE_DESCRIPTOR, "count": 1, "device_id": slave_id}
                 )
 
                 if device_info is None or device_info.isError():
@@ -115,7 +115,7 @@ async def check_user_input(user_input, pool: ModbusClientPool = None):
                         "Device detected: type=0x%02X (%s), channels=%d",
                         device_type,
                         DEVICE_TYPE_NAMES.get(device_type, "Unknown"),
-                        channel_count
+                        channel_count,
                     )
         except Exception as e:
             errors["base"] = "ec_modbus_connect_error"
@@ -134,9 +134,7 @@ async def check_user_input(user_input, pool: ModbusClientPool = None):
 
                 # Read generic device descriptor register to validate connectivity
                 device_info = await client.read_holding_registers(
-                    address=REG_DEVICE_DESCRIPTOR,
-                    count=1,
-                    device_id=slave_id
+                    address=REG_DEVICE_DESCRIPTOR, count=1, device_id=slave_id
                 )
 
                 if device_info is None or device_info.isError():
@@ -149,7 +147,7 @@ async def check_user_input(user_input, pool: ModbusClientPool = None):
                         "Device detected: type=0x%02X (%s), channels=%d",
                         device_type,
                         DEVICE_TYPE_NAMES.get(device_type, "Unknown"),
-                        channel_count
+                        channel_count,
                     )
 
         except Exception as e:
@@ -164,11 +162,12 @@ async def check_user_input(user_input, pool: ModbusClientPool = None):
 def _get_pool(hass) -> ModbusClientPool:
     """Get the ModbusClientPool from hass.data."""
     from .const import DOMAIN
+
     return hass.data.get(DOMAIN, {}).get(POOL_KEY)
 
 
 class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """ Handle a config flow for ectoControl Adapter. """
+    """Handle a config flow for ectoControl Adapter."""
 
     VERSION = 1
 
@@ -177,7 +176,7 @@ class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.next_step = None
 
     async def async_step_user(self, user_input=None):
-        """ Handle the initial step. """
+        """Handle the initial step."""
         if self.next_step:
             return await self.next_step(user_input)
 
@@ -188,16 +187,11 @@ class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.next_step = self.async_step_connection
             return await self.async_step_connection()
 
-        schema = await create_schema(
-            hass=self.hass,
-            user_input=user_input)
-        return self.async_show_form(
-            step_id="user",
-            data_schema=schema
-        )
+        schema = await create_schema(hass=self.hass, user_input=user_input)
+        return self.async_show_form(step_id="user", data_schema=schema)
 
     async def async_step_connection(self, user_input=None):
-        """ Handle the connection step. """
+        """Handle the connection step."""
         _LOGGER.debug("Request to create config (connection step): %s", user_input)
 
         errors = {}
@@ -206,18 +200,11 @@ class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             pool = _get_pool(self.hass)
             errors = await check_user_input(self.config_data, pool)
             if not errors:
-                return self.async_create_entry(
-                    title=self.config_data[OPT_NAME],
-                    data=self.config_data)
+                return self.async_create_entry(title=self.config_data[OPT_NAME], data=self.config_data)
 
-        schema = await create_schema(
-            hass=self.hass,
-            user_input=user_input,
-            type=self.config_data[OPT_MODBUS_TYPE])
+        schema = await create_schema(hass=self.hass, user_input=user_input, type=self.config_data[OPT_MODBUS_TYPE])
         return self.async_show_form(
-            step_id="user",
-            data_schema=self.add_suggested_values_to_schema(schema, user_input or {}),
-            errors=errors
+            step_id="user", data_schema=self.add_suggested_values_to_schema(schema, user_input or {}), errors=errors
         )
 
     @staticmethod
@@ -227,16 +214,16 @@ class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class ECAdapterOptionsFlow(config_entries.OptionsFlow):
-    """ Handle options flow for ectoControl Adapter. """
+    """Handle options flow for ectoControl Adapter."""
 
     def __init__(self, config_entry):
-        if HA_VERSION < '2024.12':
+        if HA_VERSION < "2024.12":
             self.config_entry = config_entry
         self.config_data = {}
         self.next_step = None
 
     async def async_step_init(self, user_input=None):
-        """ Manage the options. """
+        """Manage the options."""
         if self.next_step:
             return await self.next_step(user_input)
 
@@ -248,21 +235,15 @@ class ECAdapterOptionsFlow(config_entries.OptionsFlow):
             self.next_step = self.async_step_connection
             return await self.async_step_connection()
 
-        schema = await create_schema(
-            hass=self.hass,
-            config_entry=self.config_entry,
-            user_input=user_input
-        )
+        schema = await create_schema(hass=self.hass, config_entry=self.config_entry, user_input=user_input)
 
         options = self.config_entry.options or self.config_entry.data
         return self.async_show_form(
-            step_id="init",
-            data_schema=self.add_suggested_values_to_schema(schema, options),
-            errors=errors
+            step_id="init", data_schema=self.add_suggested_values_to_schema(schema, options), errors=errors
         )
 
     async def async_step_connection(self, user_input=None):
-        """ Handle the connection step. """
+        """Handle the connection step."""
         _LOGGER.debug("Request to update options (connection step): %s", user_input)
 
         errors = {}
@@ -273,9 +254,8 @@ class ECAdapterOptionsFlow(config_entries.OptionsFlow):
             if not errors:
                 # Update configuration
                 self.hass.config_entries.async_update_entry(
-                    self.config_entry,
-                    title=self.config_data[OPT_NAME],
-                    options=self.config_data)
+                    self.config_entry, title=self.config_data[OPT_NAME], options=self.config_data
+                )
 
                 # Send signal to subscribers
                 async_dispatcher_send(self.hass, f"{SENSOR_UPDATE_SIGNAL}_{self.config_entry.entry_id}")
@@ -286,11 +266,10 @@ class ECAdapterOptionsFlow(config_entries.OptionsFlow):
             hass=self.hass,
             config_entry=self.config_entry,
             user_input=user_input,
-            type=self.config_data[OPT_MODBUS_TYPE])
+            type=self.config_data[OPT_MODBUS_TYPE],
+        )
 
         options = user_input or self.config_entry.options or self.config_entry.data or {}
         return self.async_show_form(
-            step_id="init",
-            data_schema=self.add_suggested_values_to_schema(schema, options),
-            errors=errors
+            step_id="init", data_schema=self.add_suggested_values_to_schema(schema, options), errors=errors
         )

@@ -87,9 +87,7 @@ class TestModbusDataUpdateCoordinator:
         assert data[REG_R_ADAPTER_VERSION] == [0x0102]
 
     @pytest.mark.asyncio
-    async def test_async_update_data_input_registers(
-        self, coordinator_with_input_registers, mock_modbus_client
-    ):
+    async def test_async_update_data_input_registers(self, coordinator_with_input_registers, mock_modbus_client):
         """Test data update with input registers (function code 0x04)."""
         mock_modbus_client.set_register(REG_R_CONTACT_CHANNELS, 0xFF00)
 
@@ -101,9 +99,7 @@ class TestModbusDataUpdateCoordinator:
         assert data[REG_R_CONTACT_CHANNELS] == [0xFF00]
 
     @pytest.mark.asyncio
-    async def test_async_update_data_partial_failure(
-        self, coordinator, mock_modbus_client
-    ):
+    async def test_async_update_data_partial_failure(self, coordinator, mock_modbus_client):
         """Test data update with partial register read failure."""
         # First register succeeds
         mock_modbus_client.set_register(REG_R_ADAPTER_STATUS, 0x0865)
@@ -137,6 +133,7 @@ class TestModbusDataUpdateCoordinator:
     @pytest.mark.asyncio
     async def test_async_update_data_exception(self, coordinator, mock_modbus_client):
         """Test data update raises UpdateFailed on exception."""
+
         # Make the read throw an exception
         async def raise_error(address, count, device_id=1):
             raise Exception("Connection lost")
@@ -149,9 +146,7 @@ class TestModbusDataUpdateCoordinator:
         assert "Connection lost" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_async_update_data_multi_register(
-        self, mock_modbus_client, hass, config_entry, pooled_client
-    ):
+    async def test_async_update_data_multi_register(self, mock_modbus_client, hass, config_entry, pooled_client):
         """Test reading multi-register values (e.g., uint32 uptime)."""
         master = ModbusMasterCoordinator(
             hass=hass,
@@ -242,9 +237,7 @@ class TestCoordinatorWithDeviceTypes:
     """Tests for coordinator with device-specific registers."""
 
     @pytest.mark.asyncio
-    async def test_contact_splitter_coordinator(
-        self, hass, config_entry, pooled_client, mock_modbus_client
-    ):
+    async def test_contact_splitter_coordinator(self, hass, config_entry, pooled_client, mock_modbus_client):
         """Test coordinator with contact splitter registers."""
         master = ModbusMasterCoordinator(
             hass=hass,
@@ -276,9 +269,7 @@ class TestCoordinatorWithDeviceTypes:
         assert data[REG_R_CONTACT_CHANNELS] == [0x0F00]
 
     @pytest.mark.asyncio
-    async def test_relay_module_coordinator(
-        self, hass, config_entry, pooled_client, mock_modbus_client
-    ):
+    async def test_relay_module_coordinator(self, hass, config_entry, pooled_client, mock_modbus_client):
         """Test coordinator with relay module registers."""
         master = ModbusMasterCoordinator(
             hass=hass,

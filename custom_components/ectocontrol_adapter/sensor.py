@@ -12,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """ Set up sensors """
+    """Set up sensors"""
     data = hass.data[DOMAIN][config_entry.entry_id]
     coordinators = data["update_coordinators"]
     register_groups = data["update_register_groups"]
@@ -35,19 +35,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
             if "converters" in config:
                 for conv_name in config["converters"].keys():
-                    sensor = ModbusSensor(
-                        coordinator, register, config,
-                        bitmask=None, conv_name=conv_name)
+                    sensor = ModbusSensor(coordinator, register, config, bitmask=None, conv_name=conv_name)
                     sensors.append(sensor)
 
     async_add_entities(sensors, True)
 
 
 class ModbusSensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, SensorEntity):
-    """ Modbus Sensor. """
+    """Modbus Sensor."""
 
     def __init__(self, coordinator, register_addr, register_config, bitmask=None, conv_name=None):
-        """ Initialize the sensor. """
+        """Initialize the sensor."""
         super().__init__(coordinator)
         self.register_addr = register_addr
         self.register_config = register_config
@@ -66,7 +64,7 @@ class ModbusSensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, Sens
             self.conv = self.conv_config["converter"]
 
         # Display values
-        self.choices = self.bitmask_config.get('choices') or self.register_config.get('choices')
+        self.choices = self.bitmask_config.get("choices") or self.register_config.get("choices")
 
         # Entity attributes
         self._attr_has_entity_name = True
@@ -93,9 +91,7 @@ class ModbusSensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, Sens
         self._attr_native_value = None
 
         # Device info
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)}
-        )
+        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
     @property
     def native_value(self):
@@ -129,14 +125,10 @@ class ModbusSensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, Sens
         return {
             "register_address": hex(self.register_addr),
             "data_type": self.register_config.get("data_type"),
-            "register_count": self.register_config.get("count", 1)
+            "register_count": self.register_config.get("count", 1),
         }
 
     @property
     def icon(self):
-        icon = (
-            self.bitmask_config.get("icon") or
-            self.conv_config.get("icon") or
-            self.register_config.get("icon")
-        )
+        icon = self.bitmask_config.get("icon") or self.conv_config.get("icon") or self.register_config.get("icon")
         return icon

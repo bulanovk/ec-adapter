@@ -16,7 +16,7 @@ _SUBSCRIBE_ATTEMPTS_DELAY = 5
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """ Set up number entities  """
+    """Set up number entities"""
     data = hass.data[DOMAIN][config_entry.entry_id]
     master_coordinator = data["master_coordinator"]
     write_registers = data["write_registers"]
@@ -31,7 +31,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
-    """ Modbus Number entity """
+    """Modbus Number entity"""
 
     def __init__(self, hass, master_coordinator, register_addr, register_config):
         self.hass = hass
@@ -55,15 +55,14 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
         # Write after turn on
         self.write_after_connected = None
         if (
-                "write_after_connected" in register_config and
-                isinstance(register_config["write_after_connected"], tuple) and
-                len(register_config["write_after_connected"]) == 2):
+            "write_after_connected" in register_config
+            and isinstance(register_config["write_after_connected"], tuple)
+            and len(register_config["write_after_connected"]) == 2
+        ):
             self.write_after_connected = self.register_config["write_after_connected"]
 
         # Device info
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)}
-        )
+        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
     async def async_added_to_hass(self):
         await super().async_added_to_hass()
@@ -78,27 +77,26 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
                 # Write register immediatly
                 _LOGGER.debug(
                     f"'{self._attr_translation_key}' added to HA. "
-                    f"Write last state to register={self.register_addr:#06x}")
+                    f"Write last state to register={self.register_addr:#06x}"
+                )
                 await self.async_set_native_value(value=float(last_state.state))
 
         # Subscribe to adapter connected event
         if self.write_after_connected is not None:
             async_call_later(
-                hass=self.hass,
-                delay=_SUBSCRIBE_ATTEMPTS_DELAY,
-                action=lambda _: self._subscribe_with_retry()
+                hass=self.hass, delay=_SUBSCRIBE_ATTEMPTS_DELAY, action=lambda _: self._subscribe_with_retry()
             )
 
     async def async_set_native_value(self, value: float) -> None:
-        """ Set value via write coordinator """
+        """Set value via write coordinator"""
         intval = wrval = int(value)
         scale = self.register_config.get("scale")
         if scale is not None and scale > 0:
             wrval *= scale  # real write value
 
         success = await self.coordinator.write_registers(
-            address=self.register_addr, values=[wrval],
-            skip_verify=self.register_config.get("skip_verify", False))
+            address=self.register_addr, values=[wrval], skip_verify=self.register_config.get("skip_verify", False)
+        )
 
         if success:
             self._attr_native_value = intval
@@ -108,7 +106,7 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
             raise Exception(f"Failed to write value '{intval}' to register={self.register_addr:#06x}")
 
     def _subscribe_with_retry(self, attempt=1, max_attempts=10):
-        """ Subscribe to binary sensor updates (i.e. connectivity) """
+        """Subscribe to binary sensor updates (i.e. connectivity)"""
         sensor_addr, sensor_name = self.write_after_connected
         reg = entity_registry.async_get(self.hass)
 
@@ -116,31 +114,32 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
         entity_id = reg.async_get_entity_id(Platform.BINARY_SENSOR, DOMAIN, sensor_unique_id)
         if entity_id:
             self.async_on_remove(
-                async_track_state_change_event(
-                    self.hass, entity_id, self._handle_write_after_connected))
+                async_track_state_change_event(self.hass, entity_id, self._handle_write_after_connected)
+            )
             _LOGGER.debug(f"Subscribe to '{entity_id}' for '{self._attr_translation_key}': SUCCESS")
         else:
             if attempt < max_attempts:
                 _LOGGER.debug(
-                    f"Subscription attempt '{attempt}' to '{sensor_unique_id}' "
-                    f"failed, try again in 5 seconds...")
+                    f"Subscription attempt '{attempt}' to '{sensor_unique_id}' " f"failed, try again in 5 seconds..."
+                )
                 async_call_later(
                     hass=self.hass,
                     delay=_SUBSCRIBE_ATTEMPTS_DELAY,
-                    action=lambda _: self._subscribe_with_retry(attempt + 1, max_attempts)
+                    action=lambda _: self._subscribe_with_retry(attempt + 1, max_attempts),
                 )
             else:
                 _LOGGER.error(
-                    f"Unable to find entity '{sensor_unique_id}' "
-                    f"to subscribe to after '{max_attempts}' attempts")
+                    f"Unable to find entity '{sensor_unique_id}' " f"to subscribe to after '{max_attempts}' attempts"
+                )
 
     async def _handle_write_after_connected(self, event):
-        """ Processing updates to monitored binary sensor """
+        """Processing updates to monitored binary sensor"""
         _LOGGER.debug(
             f"Sensor state change detected: '{event.data.get('entity_id')}', "
-            f"subscriber is: '{self._attr_translation_key}'")
+            f"subscriber is: '{self._attr_translation_key}'"
+        )
 
-        new_state = event.data.get('new_state')
+        new_state = event.data.get("new_state")
         if new_state.state == "off":
             return
 

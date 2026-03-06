@@ -44,7 +44,7 @@ MODBUS_TYPES = [
     {"value": MODBUS_TYPE_TCP, "label": "TCP"},
     {"value": MODBUS_TYPE_UDP, "label": "UDP"},
     {"value": MODBUS_TYPE_RTU_OVER_TCP, "label": "RTU over TCP"},
-    {"value": MODBUS_TYPE_SERIAL, "label": "Serial"}
+    {"value": MODBUS_TYPE_SERIAL, "label": "Serial"},
 ]
 
 # Baud rate choices
@@ -64,7 +64,7 @@ SERIAL_BAUDRATES = [
     {"value": "115200", "label": "115 200 bps"},
     {"value": "230400", "label": "230 400 bps"},
     {"value": "460800", "label": "460 800 bps"},
-    {"value": "921600", "label": "921 600 bps"}
+    {"value": "921600", "label": "921 600 bps"},
 ]
 
 # Byte size (data bits) choices
@@ -73,50 +73,43 @@ SERIAL_BYTESIZES = [
     {"value": "8", "label": "8 bits"},
     {"value": "7", "label": "7 bits"},
     {"value": "6", "label": "6 bits"},
-    {"value": "5", "label": "5 bits"}
+    {"value": "5", "label": "5 bits"},
 ]
 
 # Parity choices
 DEFAULT_PARITY = "N"
-SERIAL_PARITIES = [
-    {"value": "N", "label": "None"},
-    {"value": "E", "label": "Even"},
-    {"value": "O", "label": "Odd"}
-]
+SERIAL_PARITIES = [{"value": "N", "label": "None"}, {"value": "E", "label": "Even"}, {"value": "O", "label": "Odd"}]
 
 # Stop bits
 DEFAULT_STOPBITS = 1
-SERIAL_STOPBITS = [
-    {"value": "1", "label": "1 bit"},
-    {"value": "2", "label": "2 bits"}
-]
+SERIAL_STOPBITS = [{"value": "1", "label": "1 bit"}, {"value": "2", "label": "2 bits"}]
 
 # Modbus Queue wait timeout (seconds)
 QUEUE_TIMEOUT = 1.0
 
 # Generic Device Information Registers
-REG_DEVICE_UID = 0x0001           # u24 (3 bytes): unique device identifier
+REG_DEVICE_UID = 0x0001  # u24 (3 bytes): unique device identifier
 REG_DEVICE_TYPE_CHANNELS = 0x0003  # MSB: device type, LSB: channel count
 
 # Device Type Codes (extracted from MSB of register 0x0003)
-DEVICE_TYPE_OPENTHERM_V2 = 0x14   # OpenTherm Adapter v2
-DEVICE_TYPE_EBUS = 0x15           # eBus Adapter
-DEVICE_TYPE_NAVIEN = 0x16         # Navien Adapter
-DEVICE_TYPE_TEMP_SENSOR = 0x22    # Temperature Sensor
+DEVICE_TYPE_OPENTHERM_V2 = 0x14  # OpenTherm Adapter v2
+DEVICE_TYPE_EBUS = 0x15  # eBus Adapter
+DEVICE_TYPE_NAVIEN = 0x16  # Navien Adapter
+DEVICE_TYPE_TEMP_SENSOR = 0x22  # Temperature Sensor
 DEVICE_TYPE_HUMIDITY_SENSOR = 0x23  # Humidity Sensor
 DEVICE_TYPE_CONTACT_SENSOR = 0x50  # Universal Contact Sensor
 DEVICE_TYPE_CONTACT_SPLITTER = 0x59  # Contact Sensor Splitter (base type)
 
 # Contact Splitter variants (distinguished by channel count)
-DEVICE_TYPE_CONTACT_SPLITTER_8CH = (0x59, 8)   # 8-channel Contact Splitter
-DEVICE_TYPE_CONTACT_SPLITTER_10CH = (0x59, 10) # 10-channel Contact Splitter
+DEVICE_TYPE_CONTACT_SPLITTER_8CH = (0x59, 8)  # 8-channel Contact Splitter
+DEVICE_TYPE_CONTACT_SPLITTER_10CH = (0x59, 10)  # 10-channel Contact Splitter
 
 # Relay Module Types
-DEVICE_TYPE_RELAY_BLOCK_2CH = 0xC0   # 2-channel Relay Module (base type)
+DEVICE_TYPE_RELAY_BLOCK_2CH = 0xC0  # 2-channel Relay Module (base type)
 DEVICE_TYPE_RELAY_BLOCK_10CH = 0xC1  # 10-channel Relay Module (base type)
 
 # Relay variants (distinguished by channel count)
-DEVICE_TYPE_RELAY_2CH = (0xC0, 2)    # 2-channel Relay Module
+DEVICE_TYPE_RELAY_2CH = (0xC0, 2)  # 2-channel Relay Module
 DEVICE_TYPE_RELAY_10CH = (0xC1, 10)  # 10-channel Relay Module
 
 DEVICE_TYPE_NAMES = {

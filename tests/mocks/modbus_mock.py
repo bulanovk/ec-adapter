@@ -101,9 +101,7 @@ class MockModbusClient:
         """
         self._write_error = error
 
-    async def read_holding_registers(
-        self, address: int, count: int, device_id: int = 1
-    ) -> MockModbusResponse:
+    async def read_holding_registers(self, address: int, count: int, device_id: int = 1) -> MockModbusResponse:
         """Read holding registers (function code 0x03).
 
         Args:
@@ -114,12 +112,14 @@ class MockModbusClient:
         Returns:
             MockModbusResponse with register values
         """
-        self._read_calls.append({
-            "type": "holding",
-            "address": address,
-            "count": count,
-            "device_id": device_id,
-        })
+        self._read_calls.append(
+            {
+                "type": "holding",
+                "address": address,
+                "count": count,
+                "device_id": device_id,
+            }
+        )
 
         if self._read_error:
             return MockModbusResponse(is_error=True)
@@ -137,9 +137,7 @@ class MockModbusClient:
 
         return MockModbusResponse(registers=registers)
 
-    async def read_input_registers(
-        self, address: int, count: int, device_id: int = 1
-    ) -> MockModbusResponse:
+    async def read_input_registers(self, address: int, count: int, device_id: int = 1) -> MockModbusResponse:
         """Read input registers (function code 0x04).
 
         Args:
@@ -150,12 +148,14 @@ class MockModbusClient:
         Returns:
             MockModbusResponse with register values
         """
-        self._read_calls.append({
-            "type": "input",
-            "address": address,
-            "count": count,
-            "device_id": device_id,
-        })
+        self._read_calls.append(
+            {
+                "type": "input",
+                "address": address,
+                "count": count,
+                "device_id": device_id,
+            }
+        )
 
         if self._read_error:
             return MockModbusResponse(is_error=True)
@@ -173,9 +173,7 @@ class MockModbusClient:
 
         return MockModbusResponse(registers=registers)
 
-    async def write_registers(
-        self, address: int, values: List[int], device_id: int = 1
-    ) -> MockModbusResponse:
+    async def write_registers(self, address: int, values: List[int], device_id: int = 1) -> MockModbusResponse:
         """Write multiple registers (function code 0x10).
 
         Args:
@@ -186,11 +184,13 @@ class MockModbusClient:
         Returns:
             MockModbusResponse indicating success or failure
         """
-        self._write_calls.append({
-            "address": address,
-            "values": values,
-            "device_id": device_id,
-        })
+        self._write_calls.append(
+            {
+                "address": address,
+                "values": values,
+                "device_id": device_id,
+            }
+        )
 
         if self._write_error:
             return MockModbusResponse(is_error=True)
@@ -201,9 +201,7 @@ class MockModbusClient:
 
         return MockModbusResponse()
 
-    async def write_single_register(
-        self, address: int, value: int, device_id: int = 1
-    ) -> MockModbusResponse:
+    async def write_single_register(self, address: int, value: int, device_id: int = 1) -> MockModbusResponse:
         """Write a single register (function code 0x06).
 
         Args:
@@ -248,11 +246,7 @@ def create_mock_modbus_client() -> MagicMock:
     mock.connected = True
     mock.connect = AsyncMock(return_value=True)
     mock.close = MagicMock()
-    mock.read_holding_registers = AsyncMock(
-        return_value=MockModbusResponse(registers=[0])
-    )
-    mock.read_input_registers = AsyncMock(
-        return_value=MockModbusResponse(registers=[0])
-    )
+    mock.read_holding_registers = AsyncMock(return_value=MockModbusResponse(registers=[0]))
+    mock.read_input_registers = AsyncMock(return_value=MockModbusResponse(registers=[0]))
     mock.write_registers = AsyncMock(return_value=MockModbusResponse())
     return mock

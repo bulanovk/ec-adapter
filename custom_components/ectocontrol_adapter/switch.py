@@ -29,9 +29,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         # Bitmask switches - multiple entities from one register
         elif input_type == BITMASK_SWITCH_INPUT:
             for bit_config in config.get("bit_switches", []):
-                entities.append(ModbusBitmaskSwitch(
-                    hass, master_coordinator, register, config, bit_config, bit_config["bit"]
-                ))
+                entities.append(
+                    ModbusBitmaskSwitch(hass, master_coordinator, register, config, bit_config, bit_config["bit"])
+                )
 
     async_add_entities(entities)
 
@@ -53,9 +53,7 @@ class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
         self._attr_entity_category = register_config.get("category")
 
         # Device info
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)}
-        )
+        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
     async def async_added_to_hass(self):
         await super().async_added_to_hass()
@@ -71,8 +69,7 @@ class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
 
     async def async_turn_on(self, **kwargs):
         wrval = self.register_config["on_value"]
-        success = await self.coordinator.write_registers(
-            address=self.register_addr, values=[wrval])
+        success = await self.coordinator.write_registers(address=self.register_addr, values=[wrval])
 
         if success:
             self._attr_is_on = True
@@ -83,8 +80,7 @@ class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
 
     async def async_turn_off(self, **kwargs):
         wrval = self.register_config["off_value"]
-        success = await self.coordinator.write_registers(
-            address=self.register_addr, values=[wrval])
+        success = await self.coordinator.write_registers(address=self.register_addr, values=[wrval])
 
         if success:
             self._attr_is_on = False
@@ -132,9 +128,7 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
         # HA is source of truth - default to False so switch shows as toggle
         self._attr_is_on: bool = False
 
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self._master_coordinator.config_entry.entry_id)}
-        )
+        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self._master_coordinator.config_entry.entry_id)})
 
     async def async_added_to_hass(self):
         """Restore state from persistence and write to device immediately."""
@@ -179,9 +173,7 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
     async def _write_state_to_device(self, value: bool) -> bool:
         """Write state to device using read-modify-write."""
         return await self._master_coordinator.write_register_bit(
-            address=self.register_addr,
-            bit=self.bit_position,
-            value=value
+            address=self.register_addr, bit=self.bit_position, value=value
         )
 
     @property
