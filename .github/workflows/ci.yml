@@ -26,16 +26,16 @@ jobs:
           pip install black isort flake8 flake8-docstrings mypy
 
       - name: Check formatting with Black
-        run: black --check --config pyproject.toml custom_components/ tests/
+        run: black --check --config pyproject.toml custom_components/ectocontrol_adapter/ tests/
 
       - name: Check import sorting with isort
-        run: isort --check-only --settings-path pyproject.toml custom_components/ tests/
+        run: isort --check-only --settings-path pyproject.toml custom_components/ectocontrol_adapter/ tests/
 
       - name: Lint with flake8
-        run: flake8 --config .flake8 custom_components/ tests/
+        run: flake8 --config .flake8 custom_components/ectocontrol_adapter/ tests/
 
       - name: Type check with mypy
-        run: mypy --config-file pyproject.toml custom_components/
+        run: mypy --config-file pyproject.toml custom_components/ectocontrol_adapter/
         continue-on-error: true
 
   test:
@@ -59,7 +59,7 @@ jobs:
           pip install pymodbus==3.11.2
 
       - name: Run tests with coverage
-        run: pytest --cov=custom_components/ectocontrol_adapter --cov-report=xml --cov-report=term-missing -v
+        run: pytest --cov=custom_components/ectocontrol_adapter --cov-report=xml --cov-report=term-missing -v tests/
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
