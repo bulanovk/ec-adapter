@@ -2,24 +2,25 @@ import logging
 from typing import Optional
 
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.const import Platform
+from homeassistant.helpers import entity_registry
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.event import async_call_later, async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .mixins import ModbusUniqIdMixin
-from .registers import SWITCH_INPUT, BITMASK_SWITCH_INPUT
+from .registers import SWITCH_INPUT, BITMASK_SWITCH_INPUT, REG_R_ADAPTER_STATUS
 
 _LOGGER = logging.getLogger(__name__)
+_SUBSCRIBE_ATTEMPTS_DELAY = 5
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """ Set up switch entities  """
+    """Set up switch entities."""
     data = hass.data[DOMAIN][config_entry.entry_id]
     master_coordinator = data["master_coordinator"]
     write_registers = data["write_registers"]
-    update_coordinators = data["update_coordinators"]
-    update_register_groups = data["update_register_groups"]
 
     entities = []
 
@@ -32,27 +33,16 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
         # Bitmask switches - multiple entities from one register
         elif input_type == BITMASK_SWITCH_INPUT:
-            # Find the data coordinator that polls this register
-            data_coordinator = None
-            for scan_interval, coordinator in update_coordinators.items():
-                registers = update_register_groups[scan_interval]
-                for reg_addr, _ in registers:
-                    if reg_addr == register:
-                        data_coordinator = coordinator
-                        break
-                if data_coordinator:
-                    break
-
             for bit_config in config.get("bit_switches", []):
                 entities.append(ModbusBitmaskSwitch(
-                    hass, master_coordinator, data_coordinator, register, config, bit_config, bit_config["bit"]
+                    hass, master_coordinator, register, config, bit_config, bit_config["bit"]
                 ))
 
     async_add_entities(entities)
 
 
 class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
-    """ Modbus Switch entity """
+    """Modbus Switch entity."""
 
     def __init__(self, hass, master_coordinator, register_addr, register_config):
         self.hass = hass
@@ -121,16 +111,16 @@ class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
         return self.register_config.get("icon")
 
 
-class ModbusBitmaskSwitch(ModbusUniqIdMixin, CoordinatorEntity, SwitchEntity, RestoreEntity):
+class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
     """Switch entity that controls a single bit in a register.
 
-    Syncs state from coordinator data and restores persisted state on reboot.
+    HA is the source of truth. State is restored from HA persistence on reboot
+    and synced to device when connectivity is restored.
     """
 
-    def __init__(self, hass, master_coordinator, data_coordinator, register_addr, register_config, bit_config, bit_position):
-        # Initialize CoordinatorEntity with data coordinator for state syncing
-        super().__init__(data_coordinator)
+    def __init__(self, hass, master_coordinator, register_addr, register_config, bit_config, bit_position):
         self.hass = hass
+        self.coordinator = master_coordinator  # For _unique_id_prefix access
         self._master_coordinator = master_coordinator
         self.register_addr = register_addr
         self.register_config = register_config
@@ -144,96 +134,112 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, CoordinatorEntity, SwitchEntity, Re
         self._attr_device_class = bit_config.get("device_class")
         self._attr_entity_category = bit_config.get("category")
 
-        # State restoration
-        self._restored_state: Optional[bool] = None
-        self._initial_sync_done = False
+        # HA is source of truth
+        self._attr_is_on: Optional[bool] = None
+        self._connectivity_subscribed = False
 
-        # Device info (use master_coordinator for config_entry)
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self._master_coordinator.config_entry.entry_id)}
         )
 
     async def async_added_to_hass(self):
-        """Restore state from persistence."""
+        """Restore state from persistence and subscribe to connectivity."""
         await super().async_added_to_hass()
         last_state = await self.async_get_last_state()
 
         if last_state is not None:
             if last_state.state == "on":
-                self._restored_state = True
+                self._attr_is_on = True
             elif last_state.state == "off":
-                self._restored_state = False
+                self._attr_is_on = False
 
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator.
+        # Subscribe to connectivity sensor for stateless relay devices
+        async_call_later(
+            hass=self.hass,
+            delay=_SUBSCRIBE_ATTEMPTS_DELAY,
+            action=lambda _: self._subscribe_to_connectivity_with_retry()
+        )
 
-        On first update, sync restored state to device if different.
-        """
-        if not self._initial_sync_done and self._restored_state is not None:
-            self._initial_sync_done = True
-            device_state = self._get_device_state()
-            if device_state is not None and device_state != self._restored_state:
-                _LOGGER.info(
-                    "Syncing relay '%s': device state=%s, restored state=%s, writing to device",
-                    self._attr_translation_key, device_state, self._restored_state
-                )
-                # Schedule write of restored state
-                self.hass.async_create_task(self._sync_restored_state())
+    def _subscribe_to_connectivity_with_retry(self, attempt=1, max_attempts=10):
+        """Subscribe to connectivity binary sensor updates."""
+        reg = entity_registry.async_get(self.hass)
+        sensor_unique_id = f"{self._unique_id_prefix}_connectivity_{REG_R_ADAPTER_STATUS:#06x}"
+        entity_id = reg.async_get_entity_id(Platform.BINARY_SENSOR, DOMAIN, sensor_unique_id)
 
-        self.async_write_ha_state()
-
-    async def _sync_restored_state(self):
-        """Write restored state to device."""
-        if self._restored_state:
-            await self.async_turn_on(write_to_device=True)
+        if entity_id:
+            self.async_on_remove(
+                async_track_state_change_event(
+                    self.hass, entity_id, self._handle_connectivity_change))
+            self._connectivity_subscribed = True
+            _LOGGER.debug(f"Relay '{self._attr_translation_key}' subscribed to connectivity")
         else:
-            await self.async_turn_off(write_to_device=True)
+            if attempt < max_attempts:
+                async_call_later(
+                    hass=self.hass,
+                    delay=_SUBSCRIBE_ATTEMPTS_DELAY,
+                    action=lambda _: self._subscribe_to_connectivity_with_retry(attempt + 1, max_attempts)
+                )
+            else:
+                _LOGGER.warning(
+                    f"Relay '{self._attr_translation_key}' could not find connectivity sensor"
+                )
 
-    def _get_device_state(self) -> Optional[bool]:
-        """Get current device state from coordinator data."""
-        if not self.coordinator.data:
-            return None
-        raw_data = self.coordinator.data.get(self.register_addr)
-        if raw_data is None:
-            return None
-        return bool(raw_data[0] & (1 << self.bit_position))
+    async def _handle_connectivity_change(self, event):
+        """Write relay state to device when connectivity is restored."""
+        new_state = event.data.get('new_state')
+        if new_state is None or new_state.state != "on":
+            return
+
+        # Connectivity restored - write current HA state to device
+        if self._attr_is_on is not None:
+            _LOGGER.info(
+                f"Connectivity restored, syncing relay '{self._attr_translation_key}' "
+                f"state={'ON' if self._attr_is_on else 'OFF'} to device"
+            )
+            await self._write_state_to_device(self._attr_is_on)
+
+    async def async_turn_on(self, **kwargs):
+        """Turn the switch on."""
+        success = await self._write_state_to_device(True)
+        if success:
+            self._attr_is_on = True
+            self.async_write_ha_state()
+            _LOGGER.info(f"Relay '{self._attr_translation_key}' turned ON")
+        else:
+            raise Exception(f"Failed to set bit {self.bit_position} in register {self.register_addr:#06x}")
+
+    async def async_turn_off(self, **kwargs):
+        """Turn the switch off."""
+        success = await self._write_state_to_device(False)
+        if success:
+            self._attr_is_on = False
+            self.async_write_ha_state()
+            _LOGGER.info(f"Relay '{self._attr_translation_key}' turned OFF")
+        else:
+            raise Exception(f"Failed to clear bit {self.bit_position} in register {self.register_addr:#06x}")
+
+    async def _write_state_to_device(self, value: bool) -> bool:
+        """Write state to device using read-modify-write."""
+        return await self._master_coordinator.write_register_bit(
+            address=self.register_addr,
+            bit=self.bit_position,
+            value=value
+        )
 
     @property
     def is_on(self) -> Optional[bool]:
-        """Return true if the switch is on (from device state)."""
-        return self._get_device_state()
-
-    async def async_turn_on(self, write_to_device: bool = True, **kwargs):
-        if write_to_device:
-            success = await self._master_coordinator.write_register_bit(
-                address=self.register_addr,
-                bit=self.bit_position,
-                value=True
-            )
-            if not success:
-                raise Exception(f"Failed to set bit {self.bit_position} in register {self.register_addr:#06x}")
-        # Request coordinator refresh to get actual device state
-        await self.coordinator.async_request_refresh()
-
-    async def async_turn_off(self, write_to_device: bool = True, **kwargs):
-        if write_to_device:
-            success = await self._master_coordinator.write_register_bit(
-                address=self.register_addr,
-                bit=self.bit_position,
-                value=False
-            )
-            if not success:
-                raise Exception(f"Failed to clear bit {self.bit_position} in register {self.register_addr:#06x}")
-        # Request coordinator refresh to get actual device state
-        await self.coordinator.async_request_refresh()
+        """Return true if the switch is on (from HA state, not device)."""
+        return self._attr_is_on
 
     @property
     def assumed_state(self) -> bool:
-        return False  # We read actual state from device
+        """Return True as we don't trust device state reads."""
+        return True
 
     @property
     def should_poll(self) -> bool:
-        return False  # CoordinatorEntity handles updates
+        """No polling needed - state is managed internally."""
+        return False
 
     @property
     def icon(self):
