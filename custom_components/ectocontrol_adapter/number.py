@@ -97,7 +97,8 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
             wrval *= scale  # real write value
 
         success = await self.coordinator.write_registers(
-            address=self.register_addr, values=[wrval])
+            address=self.register_addr, values=[wrval],
+            skip_verify=self.register_config.get("skip_verify", False))
 
         if success:
             self._attr_native_value = intval

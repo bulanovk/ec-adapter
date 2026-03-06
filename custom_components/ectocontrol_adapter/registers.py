@@ -514,6 +514,7 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,  # seconds → 500ms units
         "unit_of_measurement": UnitOfTime.SECONDS,
+        "skip_verify": True,  # Relay timers have no status register
     },
     REG_RW_RELAY_TIMER_BASE + 1: {
         "name": "relay_2_timer",
@@ -523,6 +524,7 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
+        "skip_verify": True,
     },
     REG_RW_RELAY_TIMER_BASE + 2: {
         "name": "relay_3_timer",
@@ -532,6 +534,7 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
+        "skip_verify": True,
     },
     REG_RW_RELAY_TIMER_BASE + 3: {
         "name": "relay_4_timer",
@@ -541,6 +544,7 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
+        "skip_verify": True,
     },
     REG_RW_RELAY_TIMER_BASE + 4: {
         "name": "relay_5_timer",
@@ -550,6 +554,7 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
+        "skip_verify": True,
     },
     REG_RW_RELAY_TIMER_BASE + 5: {
         "name": "relay_6_timer",
@@ -559,6 +564,7 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
+        "skip_verify": True,
     },
     REG_RW_RELAY_TIMER_BASE + 6: {
         "name": "relay_7_timer",
@@ -568,6 +574,7 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
+        "skip_verify": True,
     },
     REG_RW_RELAY_TIMER_BASE + 7: {
         "name": "relay_8_timer",
@@ -577,6 +584,7 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
+        "skip_verify": True,
     },
     REG_RW_RELAY_TIMER_BASE + 8: {
         "name": "relay_9_timer",
@@ -586,6 +594,7 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
+        "skip_verify": True,
     },
     REG_RW_RELAY_TIMER_BASE + 9: {
         "name": "relay_10_timer",
@@ -595,6 +604,7 @@ REGISTERS_RELAY_TIMERS_10CH = {
         "step": 0.5,
         "scale": 2,
         "unit_of_measurement": UnitOfTime.SECONDS,
+        "skip_verify": True,
     },
 }
 
