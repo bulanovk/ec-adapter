@@ -449,14 +449,18 @@ Humidity: 897 / 10 = 89.7%
 Each channel is exposed as:
 - **Switch entity** - Controls relay on/off state
 - **Number entity** - Timer value in seconds (0-16383.5s)
+- **Binary sensor** - Connectivity status (derived from successful polling)
 
 | Entity Type | Count | Platform | Translation Keys |
 |-------------|-------|----------|------------------|
+| Binary Sensor | 1 | `binary_sensor.py` | `connectivity` |
 | Switch | 10 | `switch.py` | `relay_1` through `relay_10` |
 | Number | 10 | `number.py` | `relay_1_timer` through `relay_10_timer` |
 
-**2-channel variant (0xC0):** 2 switches + 2 number entities
-**10-channel variant (0xC1):** 10 switches + 10 number entities
+**2-channel variant (0xC0):** 1 binary sensor + 2 switches + 2 number entities
+**10-channel variant (0xC1):** 1 binary sensor + 10 switches + 10 number entities
+
+> **NOTE:** The connectivity binary sensor is a virtual sensor that indicates whether the device is responding to Modbus polls. When the sensor shows "on", the device is connected and relay state restoration can occur.
 
 #### Channel State Register (0x0010)
 

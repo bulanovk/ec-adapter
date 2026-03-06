@@ -6,7 +6,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .mixins import ModbusSensorMixin, ModbusUniqIdMixin
-from .registers import BM_BINARY
+from .registers import BM_BINARY, BM_CONNECTIVITY
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         for register, config in registers:
             if "bitmasks" in config:
                 for mask, mask_config in config["bitmasks"].items():
-                    if mask_config["type"] == BM_BINARY:
+                    if mask_config["type"] in (BM_BINARY, BM_CONNECTIVITY):
                         sensor = ModbusBinarySensor(coordinator, register, config, mask)
                         sensors.append(sensor)
 
@@ -68,6 +68,10 @@ class ModbusBinarySensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity
         raw_value = self._get_raw_value(raw_data)
         if raw_value is None:
             return None
+
+        # BM_CONNECTIVITY type: return True when data is available (device connected)
+        if self.bitmask_config.get("type") == BM_CONNECTIVITY:
+            return True
 
         return bool(raw_value & self.bitmask)
 

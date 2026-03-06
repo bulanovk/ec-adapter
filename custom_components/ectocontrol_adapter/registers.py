@@ -34,6 +34,7 @@ REG_TYPE_MAPPING = {
 # Bitmasks value types
 BM_VALUE = 1
 BM_BINARY = 2
+BM_CONNECTIVITY = 3  # Special type: returns True when data is available (device connected)
 
 # Input types for write registers
 BUTTON_INPUT = "button"
@@ -463,6 +464,8 @@ REGISTERS_R.update(REGISTERS_INPUT_10CH)
 
 # Relay Module Read Register (Device Types 0xC0, 0xC1)
 # Register 0x0010 is RW - coordinator polls it so switches can read their state
+# Note: Relay modules don't have a hardware status register like boiler adapters.
+# The connectivity sensor uses BM_CONNECTIVITY type which returns True when data is available.
 REGISTERS_RELAY_R = {
     REG_RW_RELAY_CHANNELS: {
         "name": "relay_channels_raw",
@@ -471,6 +474,16 @@ REGISTERS_RELAY_R = {
         "input_type": "holding",
         "scan_interval": 5,
         "category": EntityCategory.DIAGNOSTIC,
+        "bitmasks": {
+            # Connectivity sensor for state restoration on reconnect
+            # Uses BM_CONNECTIVITY type: returns True when data is available (device connected)
+            # Bitmask value is not used for BM_CONNECTIVITY, just needs to be unique
+            0x0001: {
+                "type": BM_CONNECTIVITY,
+                "name": "connectivity",
+                "device_class": BinarySensorDeviceClass.CONNECTIVITY
+            }
+        }
     }
 }
 
