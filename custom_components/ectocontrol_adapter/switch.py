@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -130,8 +129,8 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
         self._attr_device_class = bit_config.get("device_class")
         self._attr_entity_category = bit_config.get("category")
 
-        # HA is source of truth
-        self._attr_is_on: Optional[bool] = None
+        # HA is source of truth - default to False so switch shows as toggle
+        self._attr_is_on: bool = False
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self._master_coordinator.config_entry.entry_id)}
@@ -186,7 +185,7 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
         )
 
     @property
-    def is_on(self) -> Optional[bool]:
+    def is_on(self) -> bool:
         """Return true if the switch is on (from HA state, not device)."""
         return self._attr_is_on
 
