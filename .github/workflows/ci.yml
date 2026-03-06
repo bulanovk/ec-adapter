@@ -63,7 +63,6 @@ jobs:
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
-        if: matrix.python-version == '3.11'
         with:
           files: ./coverage.xml
           flags: unittests
@@ -72,26 +71,19 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  # Skip hassfest for now - enable when ready to publish to HACS
-  # hassfest:
-  #   name: Hassfest
+  # Skip HACS validation for now - enable when ready to publish to HACS
+  # HACS requires:
+  # - hacs.json file in repository root
+  # - README.md with specific format
+  # See: https://hacs.xyz/docs/publish/integration
+  # hacs:
+  #   name: HACS Validation
   #   runs-on: ubuntu-latest
   #   needs: test
   #   steps:
   #     - name: Checkout code
   #       uses: actions/checkout@v4
-  #     - name: Run hassfest
-  #       uses: home-assistant/actions/hassfest@master
-
-  hacs:
-    name: HACS Validation
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: HACS Action
-        uses: hacs/action@main
-        with:
-          category: integration
+  #     - name: HACS Action
+  #       uses: hacs/action@main
+  #       with:
+  #         category: integration
