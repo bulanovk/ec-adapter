@@ -89,7 +89,7 @@ Each register config can generate multiple entities through:
 | Type | File | Usage |
 |------|------|-------|
 | Sensor | `sensor.py` | Generated from `REGISTERS_R`, supports bitmask value extraction and converters |
-| Binary Sensor | `binary_sensor.py` | Generated from bitmask config with `type: BM_BINARY` |
+| Binary Sensor | `binary_sensor.py` | Generated from bitmask config with `type: BM_BINARY` or `BM_CONNECTIVITY` |
 | Number | `number.py` | Generated from `REGISTERS_W` with `input_type: NUMBER_INPUT` |
 | Select | `select.py` | Generated from `REGISTERS_W` with `input_type: SELECT_INPUT` |
 | Switch | `switch.py` | Generated from `REGISTERS_W` with `input_type: SWITCH_INPUT` or `BITMASK_SWITCH_INPUT` |
@@ -220,17 +220,26 @@ This prevents port lock conflicts when adding multiple devices on the same seria
 ```python
 bitmasks: {
     0x0800: {
-        "type": BM_BINARY,              # Creates binary_sensor
+        "type": BM_BINARY,              # Creates binary_sensor from hardware bit
         "name": "connectivity",
         "device_class": BinarySensorDeviceClass.CONNECTIVITY
     },
     0x00FF: {
-        "type": BM_VALUE,               # Creates additional sensor
+        "type": BM_VALUE,               # Creates sensor with extracted value
         "name": "last_reboot_code",
         "rshift": 0                     # Optional: right-shift before use
+    },
+    0x0001: {
+        "type": BM_CONNECTIVITY,        # Virtual connectivity: True when data available
+        "name": "connectivity",
+        "device_class": BinarySensorDeviceClass.CONNECTIVITY
     }
 }
 ```
+
+- **BM_BINARY**: Creates binary_sensor from hardware bit state
+- **BM_VALUE**: Creates sensor with extracted/masked value
+- **BM_CONNECTIVITY**: Creates binary_sensor that returns True when coordinator has data (for devices without hardware connectivity bit)
 
 ### Write Register Fields
 
