@@ -191,8 +191,8 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
 
     @property
     def assumed_state(self) -> bool:
-        """Return True as we don't trust device state reads."""
-        return True
+        """Return False - HA is source of truth, show as toggle."""
+        return False
 
     @property
     def should_poll(self) -> bool:
