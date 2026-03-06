@@ -6,7 +6,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .mixins import ModbusSensorMixin, ModbusUniqIdMixin
-from .registers import BM_BINARY
+from .registers import BM_BINARY, BM_CONNECTIVITY
 
 _LOGGER = logging.getLogger(__name__)
 

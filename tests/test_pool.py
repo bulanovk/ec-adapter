@@ -3,11 +3,7 @@
 Tests the connection pool logic without importing from the custom component.
 """
 
-import asyncio
 from typing import Any, Dict
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 def _get_pool_key(config: Dict[str, Any]) -> str:
@@ -18,7 +14,10 @@ def _get_pool_key(config: Dict[str, Any]) -> str:
     modbus_type = config.get("modbus_type", "")
 
     if modbus_type == "serial":
-        return f"serial:{config.get('device')}:{config.get('baudrate')}:{config.get('parity')}:{config.get('stopbits')}:{config.get('bytesize')}"
+        return (
+            f"serial:{config.get('device')}:{config.get('baudrate')}:"
+            f"{config.get('parity')}:{config.get('stopbits')}:{config.get('bytesize')}"
+        )
     elif modbus_type in ("tcp", "udp", "rtuovertcp"):
         return f"{modbus_type}:{config.get('host')}:{config.get('port')}"
     else:

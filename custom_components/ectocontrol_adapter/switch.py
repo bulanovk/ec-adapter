@@ -6,7 +6,7 @@ from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import DOMAIN
 from .mixins import ModbusUniqIdMixin
-from .registers import SWITCH_INPUT, BITMASK_SWITCH_INPUT
+from .registers import BITMASK_SWITCH_INPUT, SWITCH_INPUT
 
 _LOGGER = logging.getLogger(__name__)
 

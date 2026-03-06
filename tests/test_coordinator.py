@@ -2,8 +2,6 @@
 
 from typing import List, Tuple
 
-from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
@@ -11,12 +9,12 @@ from custom_components.ectocontrol_adapter.coordinator import ModbusDataUpdateCo
 from custom_components.ectocontrol_adapter.master import ModbusMasterCoordinator
 from custom_components.ectocontrol_adapter.registers import (
     REG_R_ADAPTER_STATUS,
-    REG_R_ADAPTER_VERSION,
     REG_R_ADAPTER_UPTIME,
+    REG_R_ADAPTER_VERSION,
     REG_R_CONTACT_CHANNELS,
     REG_RW_RELAY_CHANNELS,
-    REGISTERS_R,
     REGISTERS_INPUT_8CH,
+    REGISTERS_R,
     REGISTERS_RELAY_R,
 )
 from tests.mocks.modbus_mock import MockModbusResponse
@@ -111,7 +109,6 @@ class TestModbusDataUpdateCoordinator:
                 return MockModbusResponse(is_error=True)
             return MockModbusResponse(registers=[mock_modbus_client._registers.get(address, 0)])
 
-        original_read = mock_modbus_client.read_holding_registers
         mock_modbus_client.read_holding_registers = side_effect_read
 
         data = await coordinator._async_update_data()

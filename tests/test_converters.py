@@ -5,9 +5,6 @@ the actual integration module (which has Home Assistant dependencies).
 """
 
 import datetime
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 def calculate_boottime_from_uptime(uptime: int, current_time: datetime.datetime) -> datetime.datetime:

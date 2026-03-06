@@ -6,7 +6,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import DOMAIN
 from .master import ModbusMasterCoordinator
-from .registers import REGISTERS_R, REG_DEFAULT_SCAN_INTERVAL
+from .registers import REG_DEFAULT_SCAN_INTERVAL, REGISTERS_R
 
 _LOGGER = logging.getLogger(__name__)
 

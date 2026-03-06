@@ -15,20 +15,23 @@ POOL_KEY = "pool"
 def _get_pool_key(config: Dict[str, Any]) -> str:
     """Generate a unique key for connection pooling based on connection config."""
     from .const import (
-        OPT_MODBUS_TYPE,
-        OPT_DEVICE,
         OPT_BAUDRATE,
-        OPT_PARITY,
-        OPT_STOPBITS,
         OPT_BYTESIZE,
+        OPT_DEVICE,
         OPT_HOST,
+        OPT_MODBUS_TYPE,
+        OPT_PARITY,
         OPT_PORT,
+        OPT_STOPBITS,
     )
 
     modbus_type = config.get(OPT_MODBUS_TYPE, "")
 
     if modbus_type == "serial":
-        return f"serial:{config.get(OPT_DEVICE)}:{config.get(OPT_BAUDRATE)}:{config.get(OPT_PARITY)}:{config.get(OPT_STOPBITS)}:{config.get(OPT_BYTESIZE)}"
+        return (
+            f"serial:{config.get(OPT_DEVICE)}:{config.get(OPT_BAUDRATE)}:"
+            f"{config.get(OPT_PARITY)}:{config.get(OPT_STOPBITS)}:{config.get(OPT_BYTESIZE)}"
+        )
     elif modbus_type in ("tcp", "udp", "rtuovertcp"):
         return f"{modbus_type}:{config.get(OPT_HOST)}:{config.get(OPT_PORT)}"
     else:

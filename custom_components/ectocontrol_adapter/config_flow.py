@@ -1,5 +1,6 @@
 import logging
 
+import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
@@ -15,11 +16,9 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
 )
 
-import voluptuous as vol
-
 from .const import *  # noqa F403
 from .helpers import create_modbus_client
-from .pool import _get_pool_key, POOL_KEY, ModbusClientPool
+from .pool import POOL_KEY, ModbusClientPool, _get_pool_key
 
 # Generic register for connectivity validation (exists on all device types)
 REG_DEVICE_DESCRIPTOR = 0x0003  # MSB: device type, LSB: channel count

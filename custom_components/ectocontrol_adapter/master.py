@@ -2,10 +2,7 @@ import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 
-from .const import (
-    OPT_SLAVE,
-    DEVICE_TYPE_NAMES,
-)
+from .const import DEVICE_TYPE_NAMES, OPT_SLAVE
 from .registers import REG_DEFAULT_MAX_RETRIES, REG_DEFAULT_RETRY_DELAY, REG_STATUS_OFFSET, REG_STATUS_OK
 
 _LOGGER = logging.getLogger(__name__)

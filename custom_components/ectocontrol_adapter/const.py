@@ -1,5 +1,4 @@
 from awesomeversion import AwesomeVersion
-
 from homeassistant.const import __version__ as HAVERSION  # noqa: N812
 
 HA_VERSION = AwesomeVersion(HAVERSION)

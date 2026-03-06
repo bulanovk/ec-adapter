@@ -1,8 +1,6 @@
 """Tests for ModbusMasterCoordinator."""
 
 import asyncio
-from typing import Any, Dict
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -10,8 +8,8 @@ from custom_components.ectocontrol_adapter.master import ModbusMasterCoordinator
 from custom_components.ectocontrol_adapter.registers import (
     REG_DEFAULT_MAX_RETRIES,
     REG_DEFAULT_RETRY_DELAY,
-    REG_STATUS_OK,
     REG_STATUS_OFFSET,
+    REG_STATUS_OK,
 )
 from tests.mocks.modbus_mock import MockModbusResponse
 
@@ -75,8 +73,6 @@ class TestModbusMasterCoordinator:
         mock_modbus_client.set_register(status_reg, REG_STATUS_OK)
 
         # Mock write_registers to actually update registers
-        original_write = mock_modbus_client.write_registers
-
         async def mock_write(address, values, device_id=1):
             for i, val in enumerate(values):
                 mock_modbus_client._registers[address + i] = val

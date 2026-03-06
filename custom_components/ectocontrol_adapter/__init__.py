@@ -8,17 +8,17 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
 from .const import (
-    DOMAIN,
-    OPT_NAME,
-    DEVICE_TYPE_NAMES,
     DEVICE_TYPE_CONTACT_SPLITTER,
+    DEVICE_TYPE_NAMES,
     DEVICE_TYPE_RELAY_BLOCK_2CH,
     DEVICE_TYPE_RELAY_BLOCK_10CH,
+    DOMAIN,
+    OPT_NAME,
 )
 from .coordinator import ModbusDataUpdateCoordinator
 from .master import ModbusMasterCoordinator
-from .pool import ModbusClientPool, POOL_KEY
-from .registers import REGISTERS_R, REGISTERS_W, REG_DEFAULT_SCAN_INTERVAL, DEVICE_TYPE_DEFS
+from .pool import POOL_KEY, ModbusClientPool
+from .registers import DEVICE_TYPE_DEFS, REG_DEFAULT_SCAN_INTERVAL, REGISTERS_R, REGISTERS_W
 
 _LOGGER = logging.getLogger(__name__)
 

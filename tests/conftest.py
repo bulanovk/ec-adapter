@@ -3,7 +3,7 @@
 import asyncio
 import sys
 from typing import Any, Dict
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -149,8 +149,6 @@ def pooled_client(mock_modbus_client) -> MagicMock:
     Returns:
         Mock PooledClient instance
     """
-    from tests.mocks.modbus_mock import MockModbusResponse
-
     pooled = MagicMock()
     pooled._client = mock_modbus_client
     pooled._ref_count = 1
@@ -220,7 +218,7 @@ def mock_pool(pooled_client) -> MagicMock:
 
 
 @pytest.fixture
-def master_coordinator(hass, config_entry, pooled_client) -> "ModbusMasterCoordinator":
+def master_coordinator(hass, config_entry, pooled_client):  # noqa: F821
     """Create a ModbusMasterCoordinator for testing.
 
     Returns:

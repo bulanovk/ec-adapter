@@ -4,7 +4,20 @@
       "Bash(wc:*)",
       "Bash(find D:\\\\projects\\\\ecto\\\\ec-adapter\\\\custom_components\\\\ectocontrol_adapter:*)",
       "Bash(gh run:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(curl:*)",
+      "Bash(sed:*)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_close",
+      "Bash(file:*)",
+      "Bash(black:*)",
+      "Bash(rm:*)",
+      "Bash(pip:*)",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "Bash(flake8:*)",
+      "Bash(isort:*)"
     ]
   }
 }
