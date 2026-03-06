@@ -339,6 +339,22 @@ The pool serializes all operations, so unhandled operation types will throw "Unk
 - Line length: 119 characters (`.flake8`)
 - Max complexity: 15
 - F405 (unused import) is ignored for `from .const import *`
+- D202 ignored (Black adds blank lines after docstrings, conflicts with flake8-docstrings)
+
+## Development Environment
+
+- **Python version:** 3.13+ (required for Home Assistant 2025.10)
+- **Create venv:** `py -3.13 -m venv .venv`
+- **Run linting tools:** `.venv/Scripts/python.exe -m <tool>` (e.g., `black`, `isort`, `flake8`, `mypy`)
+- **Install dev deps:** `.venv/Scripts/pip.exe install black==26.1.0 isort flake8 flake8-docstrings mypy`
+- **Tests:** Require Linux/WSL (fcntl is Unix-only) - rely on CI for Windows development
+
+## Type Annotations (mypy)
+
+- Use `TYPE_CHECKING` block for circular imports (e.g., importing `PooledClient` in `master.py`)
+- Use `cast(Dict[int, Dict[str, Any]], ...)` for register dicts from `.get()` calls
+- Annotate class attributes explicitly: `self._client: Optional[ModbusAsyncClient] = None`
+- Queue types: `asyncio.Queue[Tuple[str, str, Dict[str, Any], asyncio.Future[Any]]]`
 
 ## Common Development Tasks
 
