@@ -1,3 +1,5 @@
+"""Select entities for ectoControl adapter."""
+
 import logging
 
 from homeassistant.components.select import SelectEntity
@@ -12,7 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up select entities"""
+    """Set up select entities."""
     data = hass.data[DOMAIN][config_entry.entry_id]
     master_coordinator = data["master_coordinator"]
     write_registers = data["write_registers"]
@@ -27,9 +29,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class ModbusSelect(ModbusUniqIdMixin, SelectEntity, RestoreEntity):
-    """Modbus Select entity"""
+    """Modbus select entity."""
 
     def __init__(self, hass, master_coordinator, register_addr, register_config):
+        """Initialize the select entity.
+
+        Args:
+            hass: Home Assistant instance.
+            master_coordinator: Master coordinator for Modbus operations.
+            register_addr: Modbus register address.
+            register_config: Register configuration dictionary.
+        """
         self.hass = hass
         self.coordinator = master_coordinator
         self.register_addr = register_addr
@@ -47,6 +57,7 @@ class ModbusSelect(ModbusUniqIdMixin, SelectEntity, RestoreEntity):
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
     async def async_added_to_hass(self):
+        """Restore state from HA persistence."""
         await super().async_added_to_hass()
         last_state = await self.async_get_last_state()
 
@@ -54,7 +65,7 @@ class ModbusSelect(ModbusUniqIdMixin, SelectEntity, RestoreEntity):
             self._attr_current_option = last_state.state
 
     async def async_select_option(self, option: str) -> None:
-        """Change the selected option"""
+        """Change the selected option."""
         if option not in self.choices:
             raise Exception(f"Unknown option '{option}' for register={self.register_addr:#06x}")
 
@@ -70,12 +81,15 @@ class ModbusSelect(ModbusUniqIdMixin, SelectEntity, RestoreEntity):
 
     @property
     def assumed_state(self) -> bool:
+        """Return True as state is assumed."""
         return True
 
     @property
     def should_poll(self) -> bool:
+        """Return False as polling is not needed."""
         return False
 
     @property
     def icon(self):
+        """Return the icon for this select entity."""
         return self.register_config.get("icon")

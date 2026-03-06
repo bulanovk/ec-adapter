@@ -1,4 +1,8 @@
-"""ectoControl Adapter"""
+"""ectoControl Adapter integration for Home Assistant.
+
+This module provides integration with ectoControl adapters for controlling
+gas and electric boilers via Modbus protocol.
+"""
 
 import logging
 

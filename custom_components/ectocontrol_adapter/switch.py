@@ -1,3 +1,5 @@
+"""Switch entities for ectoControl adapter."""
+
 import logging
 
 from homeassistant.components.switch import SwitchEntity
@@ -37,9 +39,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
-    """Modbus Switch entity."""
+    """Modbus switch entity."""
 
     def __init__(self, hass, master_coordinator, register_addr, register_config):
+        """Initialize the switch entity.
+
+        Args:
+            hass: Home Assistant instance.
+            master_coordinator: Master coordinator for Modbus operations.
+            register_addr: Modbus register address.
+            register_config: Register configuration dictionary.
+        """
         self.hass = hass
         self.coordinator = master_coordinator
         self.register_addr = register_addr
@@ -56,6 +66,7 @@ class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
     async def async_added_to_hass(self):
+        """Restore state from HA persistence."""
         await super().async_added_to_hass()
         last_state = await self.async_get_last_state()
 
@@ -68,6 +79,7 @@ class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
                 self._attr_is_on = None
 
     async def async_turn_on(self, **kwargs):
+        """Turn the switch on."""
         wrval = self.register_config["on_value"]
         success = await self.coordinator.write_registers(address=self.register_addr, values=[wrval])
 
@@ -79,6 +91,7 @@ class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
             raise Exception(f"Failed to write value '{wrval}' to register={self.register_addr:#06x}")
 
     async def async_turn_off(self, **kwargs):
+        """Turn the switch off."""
         wrval = self.register_config["off_value"]
         success = await self.coordinator.write_registers(address=self.register_addr, values=[wrval])
 
@@ -91,14 +104,17 @@ class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
 
     @property
     def assumed_state(self) -> bool:
+        """Return True as state is assumed."""
         return True
 
     @property
     def should_poll(self) -> bool:
+        """Return False as polling is not needed."""
         return False
 
     @property
     def icon(self):
+        """Return the icon for this switch."""
         return self.register_config.get("icon")
 
 
@@ -110,6 +126,16 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
     """
 
     def __init__(self, hass, master_coordinator, register_addr, register_config, bit_config, bit_position):
+        """Initialize the bitmask switch.
+
+        Args:
+            hass: Home Assistant instance.
+            master_coordinator: Master coordinator for Modbus operations.
+            register_addr: Modbus register address.
+            register_config: Register configuration dictionary.
+            bit_config: Bit configuration dictionary.
+            bit_position: Bit position (0-15).
+        """
         self.hass = hass
         self.coordinator = master_coordinator  # For _unique_id_prefix access
         self._master_coordinator = master_coordinator
@@ -193,4 +219,5 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
 
     @property
     def icon(self):
+        """Return the icon for this switch."""
         return self.bit_config.get("icon")

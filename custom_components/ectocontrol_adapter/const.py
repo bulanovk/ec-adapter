@@ -1,3 +1,9 @@
+"""Constants and configuration options for the ectoControl Adapter integration.
+
+This module defines all constants used throughout the integration including
+domain names, configuration options, device types, and default values.
+"""
+
 from awesomeversion import AwesomeVersion
 from homeassistant.const import __version__ as HAVERSION  # noqa: N812
 

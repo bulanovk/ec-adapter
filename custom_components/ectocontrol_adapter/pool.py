@@ -42,6 +42,11 @@ class PooledClient:
     """A pooled Modbus client with reference counting and operation queue."""
 
     def __init__(self, config: Dict[str, Any]):
+        """Initialize the pooled client.
+
+        Args:
+            config: Connection configuration dictionary.
+        """
         self._config = config
         self._client = None
         self._ref_count = 0
@@ -111,7 +116,7 @@ class PooledClient:
         return self._client is not None and self._client.connected
 
     async def _process_queue(self):
-        """Main loop for processing Modbus commands."""
+        """Process queued Modbus commands."""
         while self._is_running:
             try:
                 operation_id, operation_type, operation_data, future = await asyncio.wait_for(
@@ -189,6 +194,7 @@ class ModbusClientPool:
     """Pool of shared Modbus clients keyed by connection configuration."""
 
     def __init__(self):
+        """Initialize the client pool."""
         self._pools: Dict[str, PooledClient] = {}
         self._lock = asyncio.Lock()
 

@@ -1,3 +1,5 @@
+"""Mixin classes for ectoControl adapter entities."""
+
 import logging
 import struct
 
@@ -20,7 +22,10 @@ def _unique_id_prefix(config: dict):
 
 
 class ModbusSensorMixin:
+    """Mixin providing raw value conversion for Modbus sensors."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize the mixin."""
         super().__init__(*args, **kwargs)
 
     def _get_raw_value(self, raw_data):
@@ -65,9 +70,13 @@ class ModbusSensorMixin:
 
 
 class ModbusUniqIdMixin:
+    """Mixin providing unique ID generation for Modbus entities."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize the mixin."""
         super().__init__(*args, **kwargs)
 
     @property
     def _unique_id_prefix(self):
+        """Generate unique ID prefix based on connection config."""
         return _unique_id_prefix(self.coordinator._config)

@@ -1,3 +1,5 @@
+"""Data update coordinator for ectoControl adapter."""
+
 import logging
 from datetime import timedelta
 
@@ -12,7 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
-    """Modbus data updater"""
+    """Modbus data update coordinator."""
 
     def __init__(
         self,
@@ -22,6 +24,15 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
         registers,
         scan_interval=REG_DEFAULT_SCAN_INTERVAL,
     ):
+        """Initialize the coordinator.
+
+        Args:
+            hass: Home Assistant instance.
+            config_entry: Config entry instance.
+            master: Master coordinator for Modbus operations.
+            registers: List of (address, config) tuples to poll.
+            scan_interval: Polling interval in seconds.
+        """
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=scan_interval))
         self.hass = hass
         self.config_entry = config_entry

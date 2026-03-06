@@ -1,3 +1,5 @@
+"""Button entities for ectoControl adapter."""
+
 import logging
 
 from homeassistant.components.button import ButtonEntity
@@ -11,7 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up select entities"""
+    """Set up button entities."""
     data = hass.data[DOMAIN][config_entry.entry_id]
     master_coordinator = data["master_coordinator"]
     write_registers = data["write_registers"]
@@ -30,9 +32,18 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class ModbusButton(ModbusUniqIdMixin, ButtonEntity):
-    """Modbus Button entity"""
+    """Modbus button entity."""
 
     def __init__(self, hass, master_coordinator, register_addr, register_config, button_config):
+        """Initialize the button.
+
+        Args:
+            hass: Home Assistant instance.
+            master_coordinator: Master coordinator for Modbus operations.
+            register_addr: Modbus register address.
+            register_config: Register configuration dictionary.
+            button_config: Button configuration dictionary.
+        """
         self.hass = hass
         self.coordinator = master_coordinator
         self.register_addr = register_addr
@@ -49,7 +60,7 @@ class ModbusButton(ModbusUniqIdMixin, ButtonEntity):
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
     async def async_press(self) -> None:
-        """Press button"""
+        """Press the button."""
         wrval = self.button_config.get("value")
         if not isinstance(wrval, int):
             raise Exception(f"Can not write value '{wrval}' to register={self.register_addr:#06x}")
@@ -65,8 +76,10 @@ class ModbusButton(ModbusUniqIdMixin, ButtonEntity):
 
     @property
     def should_poll(self) -> bool:
+        """Return False as buttons do not need polling."""
         return False
 
     @property
     def icon(self):
+        """Return the icon for this button."""
         return self.button_config.get("icon") or self.register_config.get("icon")

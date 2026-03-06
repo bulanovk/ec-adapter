@@ -1,3 +1,5 @@
+"""Config flow for ectoControl adapter."""
+
 import logging
 
 import voluptuous as vol
@@ -27,8 +29,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def create_schema(hass, config_entry=None, user_input=None, type="init"):
-    """Common schema for ConfigFlow and OptionsFlow."""
-
+    """Create common schema for ConfigFlow and OptionsFlow."""
     if type == "serial":
         return vol.Schema(
             {
@@ -171,6 +172,7 @@ class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     def __init__(self):
+        """Initialize the config flow."""
         self.config_data = {}
         self.next_step = None
 
@@ -209,6 +211,7 @@ class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
+        """Get the options flow for this handler."""
         return ECAdapterOptionsFlow(config_entry)
 
 
@@ -216,6 +219,11 @@ class ECAdapterOptionsFlow(config_entries.OptionsFlow):
     """Handle options flow for ectoControl Adapter."""
 
     def __init__(self, config_entry):
+        """Initialize the options flow.
+
+        Args:
+            config_entry: The config entry being configured.
+        """
         if HA_VERSION < "2024.12":
             self.config_entry = config_entry
         self.config_data = {}

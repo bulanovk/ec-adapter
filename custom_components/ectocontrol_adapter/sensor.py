@@ -1,3 +1,5 @@
+"""Sensor entities for ectoControl adapter."""
+
 import logging
 
 from homeassistant.components.sensor import SensorEntity
@@ -12,7 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up sensors"""
+    """Set up sensor entities."""
     data = hass.data[DOMAIN][config_entry.entry_id]
     coordinators = data["update_coordinators"]
     register_groups = data["update_register_groups"]
@@ -130,5 +132,6 @@ class ModbusSensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, Sens
 
     @property
     def icon(self):
+        """Return the icon for this sensor."""
         icon = self.bitmask_config.get("icon") or self.conv_config.get("icon") or self.register_config.get("icon")
         return icon

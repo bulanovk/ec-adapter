@@ -1,3 +1,9 @@
+"""Modbus master coordinator for managing Modbus operations.
+
+This module provides the ModbusMasterCoordinator class that handles all
+Modbus communication through a shared connection pool.
+"""
+
 import asyncio
 import logging
 from typing import Any, Dict, List, Optional
@@ -12,6 +18,15 @@ class ModbusMasterCoordinator:
     """Coordinator for Modbus operations using a shared connection pool."""
 
     def __init__(self, hass, config_entry, pool, pool_key: str, pooled_client):
+        """Initialize the Modbus master coordinator.
+
+        Args:
+            hass: Home Assistant instance.
+            config_entry: Config entry instance.
+            pool: Modbus client pool instance.
+            pool_key: Unique key for the pooled connection.
+            pooled_client: Pooled client instance for Modbus operations.
+        """
         self.hass = hass
         self.config_entry = config_entry
         self._config = config_entry.options or config_entry.data

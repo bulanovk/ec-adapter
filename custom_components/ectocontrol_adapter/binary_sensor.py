@@ -1,3 +1,5 @@
+"""Binary sensor entities for ectoControl adapter."""
+
 import logging
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
@@ -34,9 +36,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class ModbusBinarySensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, BinarySensorEntity):
-    """Binary sensor for bitmasks values."""
+    """Binary sensor for bitmask values."""
 
     def __init__(self, coordinator, register_addr, register_config, bitmask):
+        """Initialize the binary sensor.
+
+        Args:
+            coordinator: Data update coordinator.
+            register_addr: Modbus register address.
+            register_config: Register configuration dictionary.
+            bitmask: Bitmask value for this sensor.
+        """
         super().__init__(coordinator)
         self.register_addr = register_addr
         self.register_config = register_config
@@ -71,4 +81,5 @@ class ModbusBinarySensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity
 
     @property
     def icon(self):
+        """Return the icon for this sensor."""
         return self.bitmask_config.get("icon")

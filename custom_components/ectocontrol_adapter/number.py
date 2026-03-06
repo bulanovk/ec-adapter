@@ -1,3 +1,5 @@
+"""Number entities for ectoControl adapter."""
+
 import logging
 
 from homeassistant.components.number import NumberEntity, NumberMode
@@ -16,7 +18,7 @@ _SUBSCRIBE_ATTEMPTS_DELAY = 5
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up number entities"""
+    """Set up number entities."""
     data = hass.data[DOMAIN][config_entry.entry_id]
     master_coordinator = data["master_coordinator"]
     write_registers = data["write_registers"]
@@ -31,9 +33,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
-    """Modbus Number entity"""
+    """Modbus number entity."""
 
     def __init__(self, hass, master_coordinator, register_addr, register_config):
+        """Initialize the number entity.
+
+        Args:
+            hass: Home Assistant instance.
+            master_coordinator: Master coordinator for Modbus operations.
+            register_addr: Modbus register address.
+            register_config: Register configuration dictionary.
+        """
         self.hass = hass
         self.coordinator = master_coordinator
         self.register_addr = register_addr
@@ -65,6 +75,7 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
     async def async_added_to_hass(self):
+        """Restore state and subscribe to connectivity events."""
         await super().async_added_to_hass()
         last_state = await self.async_get_last_state()
 
@@ -88,7 +99,7 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
             )
 
     async def async_set_native_value(self, value: float) -> None:
-        """Set value via write coordinator"""
+        """Set the value via write coordinator."""
         intval = wrval = int(value)
         scale = self.register_config.get("scale")
         if scale is not None and scale > 0:
@@ -106,7 +117,7 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
             raise Exception(f"Failed to write value '{intval}' to register={self.register_addr:#06x}")
 
     def _subscribe_with_retry(self, attempt=1, max_attempts=10):
-        """Subscribe to binary sensor updates (i.e. connectivity)"""
+        """Subscribe to binary sensor updates with retry logic."""
         sensor_addr, sensor_name = self.write_after_connected
         reg = entity_registry.async_get(self.hass)
 
@@ -133,7 +144,7 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
                 )
 
     async def _handle_write_after_connected(self, event):
-        """Processing updates to monitored binary sensor"""
+        """Handle updates to monitored binary sensor."""
         _LOGGER.debug(
             f"Sensor state change detected: '{event.data.get('entity_id')}', "
             f"subscriber is: '{self._attr_translation_key}'"
@@ -153,12 +164,15 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
 
     @property
     def assumed_state(self) -> bool:
+        """Return True as state is assumed."""
         return True
 
     @property
     def should_poll(self) -> bool:
+        """Return False as polling is not needed."""
         return False
 
     @property
     def icon(self):
+        """Return the icon for this number entity."""
         return self.register_config.get("icon")
