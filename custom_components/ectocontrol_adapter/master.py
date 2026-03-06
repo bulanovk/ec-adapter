@@ -27,6 +27,8 @@ class ModbusMasterCoordinator:
         self._pool_key = pool_key
         self._pooled_client = pooled_client
         self._slave_id = int(self._config[OPT_SLAVE])
+        # Per-register locks to serialize read-modify-write operations
+        self._register_locks: Dict[int, asyncio.Lock] = {}
 
     async def detect_device_type(self) -> Optional[dict]:
         """Detect device type by reading generic device info registers.
@@ -71,8 +73,18 @@ class ModbusMasterCoordinator:
             "channel_count": channel_count
         }
 
+    def _get_register_lock(self, address: int) -> asyncio.Lock:
+        """Get or create a lock for a specific register address."""
+        if address not in self._register_locks:
+            self._register_locks[address] = asyncio.Lock()
+        return self._register_locks[address]
+
     async def write_register_bit(self, address: int, bit: int, value: bool) -> bool:
         """Write a single bit in a register using read-modify-write.
+
+        Uses per-register locking to serialize concurrent bit modifications
+        to the same register, preventing race conditions where multiple
+        relay restorations could overwrite each other's changes.
 
         Args:
             address: Register address
@@ -82,21 +94,23 @@ class ModbusMasterCoordinator:
         Returns:
             True if successful, False otherwise
         """
-        # Read current value
-        result = await self.read_holding_registers(address, 1)
-        if result is None or result.isError():
-            return False
+        # Use per-register lock to serialize read-modify-write operations
+        async with self._get_register_lock(address):
+            # Read current value
+            result = await self.read_holding_registers(address, 1)
+            if result is None or result.isError():
+                return False
 
-        current = result.registers[0]
+            current = result.registers[0]
 
-        # Modify the bit
-        if value:
-            new_value = current | (1 << bit)
-        else:
-            new_value = current & ~(1 << bit)
+            # Modify the bit
+            if value:
+                new_value = current | (1 << bit)
+            else:
+                new_value = current & ~(1 << bit)
 
-        # Write back (skip verification - RW registers don't have status)
-        return await self.write_registers(address, [new_value], skip_verify=True)
+            # Write back (skip verification - RW registers don't have status)
+            return await self.write_registers(address, [new_value], skip_verify=True)
 
     async def read_holding_registers(self, address: int, count: int) -> Any:
         """Read holding registers from the device."""

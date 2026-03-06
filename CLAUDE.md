@@ -51,6 +51,7 @@ The integration uses a connection pooling system to allow multiple devices to sh
 - All operations are serialized through an async queue within each `PooledClient`
 - Different slave IDs are distinguished via the `device_id` parameter in each Modbus request
 - Config flow reuses existing pooled connections for validation (no port lock conflicts)
+- **Read-modify-write operations** (e.g., `write_register_bit()`) require per-register locking (`_register_locks` in `ModbusMasterCoordinator`) to prevent race conditions when multiple entities modify different bits of the same register concurrently
 
 ```
 Entry 1 (slave 1) ─┐
