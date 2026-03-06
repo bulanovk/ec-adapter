@@ -1,4 +1,5 @@
-""" Sensor converters """
+"""Sensor converters"""
+
 import datetime
 
 from homeassistant.util import dt as ha_dt

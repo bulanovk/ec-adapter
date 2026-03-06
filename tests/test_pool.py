@@ -2,6 +2,7 @@
 
 Tests the connection pool logic without importing from the custom component.
 """
+
 import asyncio
 from typing import Any, Dict
 from unittest.mock import MagicMock, patch

@@ -1,4 +1,5 @@
 """Tests for ModbusDataUpdateCoordinator."""
+
 from typing import List, Tuple
 
 from unittest.mock import AsyncMock, MagicMock, patch

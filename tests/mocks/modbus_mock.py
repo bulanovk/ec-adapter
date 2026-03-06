@@ -1,4 +1,5 @@
 """Mock Modbus client for testing."""
+
 from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, MagicMock
 

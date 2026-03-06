@@ -8,7 +8,6 @@ from homeassistant.helpers.entity import EntityCategory
 
 from .converters import uptime_to_boottime
 
-
 # Register type maping for struct python module
 REG_TYPE_MAPPING = {
     # 8-bit types (single byte)

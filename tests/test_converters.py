@@ -3,6 +3,7 @@
 This test file tests the converter logic in isolation without importing from
 the actual integration module (which has Home Assistant dependencies).
 """
+
 import datetime
 from unittest.mock import MagicMock, patch
 
