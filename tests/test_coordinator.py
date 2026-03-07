@@ -18,8 +18,8 @@ from custom_components.ectocontrol_adapter.registers import (
     REGISTERS_R,
     REGISTERS_RELAY_R,
 )
-from tests.mocks.modbus_mock import MockModbusResponse
 from tests.conftest import mock_modbus_client
+from tests.mocks.modbus_mock import MockModbusResponse
 
 
 class TestModbusDataUpdateCoordinator:
