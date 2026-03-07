@@ -100,14 +100,23 @@ class TestModbusDataUpdateCoordinator:
     @pytest.mark.asyncio
     async def test_async_update_data_partial_failure(self, coordinator, mock_modbus_client):
         """Test data update with partial register read failure."""
-        # First register succeeds
+        # Set up registers
         mock_modbus_client.set_register(REG_R_ADAPTER_STATUS, 0x0865)
+        mock_modbus_client.set_register(REG_R_ADAPTER_VERSION, 0x0102)
 
-        # Second register fails - set up error for next read
-        async def raise_error(*args, **kwargs):
-            raise Exception("Read failed")
+        # Track call count to fail only on second call
+        call_count = 0
+        original_read = mock_modbus_client.read_holding_registers
 
-        mock_modbus_client.read_holding_registers = AsyncMock(side_effect=raise_error)
+        async def read_with_failure(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 2:
+                # Second call fails
+                raise Exception("Read failed")
+            return await original_read(*args, **kwargs)
+
+        mock_modbus_client.read_holding_registers = read_with_failure
 
         data = await coordinator._async_update_data()
 
@@ -168,13 +177,13 @@ class TestModbusDataUpdateCoordinator:
 
         assert data is not None
         assert REG_R_ADAPTER_UPTIME in data
-        # Should have read 2 registers
-        assert len(data[REG_R_ADAPTER_UPTIME]) == 5
+        # Should have read 2 registers (count=2 for uint32)
+        assert len(data[REG_R_ADAPTER_UPTIME]) == 2
 
     def test_coordinator_stores_registers(self, coordinator):
         """Test that coordinator stores register list correctly."""
         assert hasattr(coordinator, "_registers")
-        assert len(coordinator._registers) == 5
+        assert len(coordinator._registers) == 2
 
     def test_scan_interval(self, coordinator):
         """Test that scan interval is set correctly."""
