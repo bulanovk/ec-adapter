@@ -1,7 +1,7 @@
 """Tests for ModbusDataUpdateCoordinator."""
 
-from typing import Any, Dict, List, Optional, Tuple
-from unittest.mock import AsyncMock, MagicMock
+from typing import List, Tuple
+from unittest.mock import AsyncMock
 
 import pytest
 from homeassistant.helpers.update_coordinator import UpdateFailed
@@ -18,8 +18,6 @@ from custom_components.ectocontrol_adapter.registers import (
     REGISTERS_R,
     REGISTERS_RELAY_R,
 )
-from tests.conftest import mock_modbus_client
-from tests.mocks.modbus_mock import MockModbusResponse
 
 
 class TestModbusDataUpdateCoordinator:
@@ -106,7 +104,9 @@ class TestModbusDataUpdateCoordinator:
         mock_modbus_client.set_register(REG_R_ADAPTER_STATUS, 0x0865)
 
         # Second register fails - set up error for next read
-        mock_modbus_client.read_holding_registers = AsyncMock(side_effect=side_effect_read)
+        mock_modbus_client.read_holding_registers = AsyncMock(
+            side_effect=lambda *a, **k: (_ for _ in ()).throw(Exception("Read failed"))
+        )
 
         data = await coordinator._async_update_data()
 
@@ -130,7 +130,9 @@ class TestModbusDataUpdateCoordinator:
         """Test data update raises UpdateFailed on exception."""
 
         # make the read throw an exception
-        mock_modbus_client.read_holding_registers = AsyncMock(side_effect=raise_error)
+        mock_modbus_client.read_holding_registers = AsyncMock(
+            side_effect=ConnectionError("Connection lost")
+        )
 
         with pytest.raises(UpdateFailed) as exc_info:
             await coordinator._async_update_data()
