@@ -99,30 +99,32 @@ class TestModbusDataUpdateCoordinator:
 
     @pytest.mark.asyncio
     async def test_async_update_data_partial_failure(self, coordinator, mock_modbus_client):
-        """Test data update with partial register read failure."""
+        """Test data update with error response (not exception) for one register."""
         # Set up registers
         mock_modbus_client.set_register(REG_R_ADAPTER_STATUS, 0x0865)
-        mock_modbus_client.set_register(REG_R_ADAPTER_VERSION, 0x0102)
 
-        # Track call count to fail only on second call
-        call_count = 0
+        # Make the mock return error responses for subsequent reads
+        # Use isError() returning True to simulate Modbus error response
+        read_count = 0
         original_read = mock_modbus_client.read_holding_registers
 
-        async def read_with_failure(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            if call_count == 2:
-                # Second call fails
-                raise Exception("Read failed")
+        async def read_with_error(*args, **kwargs):
+            nonlocal read_count
+            read_count += 1
+            if read_count == 2:
+                # Second read returns error response
+                from tests.mocks.modbus_mock import MockModbusResponse
+
+                return MockModbusResponse(is_error=True)
             return await original_read(*args, **kwargs)
 
-        mock_modbus_client.read_holding_registers = read_with_failure
+        mock_modbus_client.read_holding_registers = read_with_error
 
         data = await coordinator._async_update_data()
 
         assert data is not None
         assert data[REG_R_ADAPTER_STATUS] == [0x0865]
-        assert data[REG_R_ADAPTER_VERSION] is None  # Failed read
+        assert data[REG_R_ADAPTER_VERSION] is None  # Failed read (error response)
 
     @pytest.mark.asyncio
     async def test_async_update_data_all_fail(self, coordinator, mock_modbus_client):
