@@ -24,7 +24,7 @@ class TestModbusDataUpdateCoordinator:
     """Tests for ModbusDataUpdateCoordinator class."""
 
     @pytest.fixture
-    def coordinator(self, hass, config_entry, pooled_client):
+    def coordinator(self, hass, config_entry, pooled_client, mock_modbus_client):
         """Create a ModbusDataUpdateCoordinator for testing."""
         master = ModbusMasterCoordinator(
             hass=hass,
@@ -49,7 +49,7 @@ class TestModbusDataUpdateCoordinator:
         )
 
     @pytest.fixture
-    def coordinator_with_input_registers(self, hass, config_entry, pooled_client):
+    def coordinator_with_input_registers(self, hass, config_entry, pooled_client, mock_modbus_client):
         """Create coordinator with input registers (function code 0x04)."""
         master = ModbusMasterCoordinator(
             hass=hass,
@@ -104,9 +104,10 @@ class TestModbusDataUpdateCoordinator:
         mock_modbus_client.set_register(REG_R_ADAPTER_STATUS, 0x0865)
 
         # Second register fails - set up error for next read
-        mock_modbus_client.read_holding_registers = AsyncMock(
-            side_effect=lambda *a, **k: (_ for _ in ()).throw(Exception("Read failed"))
-        )
+        async def raise_error(*args, **kwargs):
+            raise Exception("Read failed")
+
+        mock_modbus_client.read_holding_registers = AsyncMock(side_effect=raise_error)
 
         data = await coordinator._async_update_data()
 
