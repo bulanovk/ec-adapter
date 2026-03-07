@@ -5,7 +5,12 @@ domain names, configuration options, device types, and default values.
 """
 
 from awesomeversion import AwesomeVersion
-from homeassistant.const import __version__ as HAVERSION  # noqa: N812
+
+try:
+    from homeassistant.const import __version__ as HAVERSION  # noqa: N812
+except ImportError:
+    # Fallback for test environments where HA version isn't available
+    HAVERSION = "2025.10"
 
 HA_VERSION = AwesomeVersion(HAVERSION)
 
