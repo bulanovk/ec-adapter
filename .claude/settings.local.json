@@ -28,7 +28,10 @@
       "Bash(.venv/Scripts/python.exe:*)",
       "Bash(.venv/Scripts/pip.exe install:*)",
       "Skill(commit-commands:commit)",
-      "mcp__plugin_playwright_playwright__browser_navigate_back"
+      "mcp__plugin_playwright_playwright__browser_navigate_back",
+      "Bash(python:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(python3:*)"
     ]
   }
 }

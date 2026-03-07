@@ -344,9 +344,9 @@ The pool serializes all operations, so unhandled operation types will throw "Unk
 ## Development Environment
 
 - **Python version:** 3.13+ (required for Home Assistant 2025.10)
-- **Create venv:** `py -3.13 -m venv .venv`
-- **Run linting tools:** `.venv/Scripts/python.exe -m <tool>` (e.g., `black`, `isort`, `flake8`, `mypy`)
-- **Install dev deps:** `.venv/Scripts/pip.exe install black==26.1.0 isort flake8 flake8-docstrings mypy`
+- **Create venv:** `python3 -m venv .venv` (Linux) or `py -3.13 -m venv .venv` (Windows)
+- **Run linting tools:** `.venv/bin/python -m <tool>` (Linux) or `.venv/Scripts/python.exe -m <tool>` (Windows)
+- **Install dev deps:** `.venv/bin/pip install black==26.1.0 isort flake8 flake8-docstrings mypy` (Linux) or `.venv/Scripts/pip.exe install ...` (Windows)
 - **Tests:** Require Linux/WSL (fcntl is Unix-only) - rely on CI for Windows development
 
 ## Type Annotations (mypy)

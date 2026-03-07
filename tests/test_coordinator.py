@@ -12,12 +12,11 @@ from custom_components.ectocontrol_adapter.registers import (
     REG_R_ADAPTER_STATUS,
     REG_R_ADAPTER_UPTIME,
     REG_R_ADAPTER_VERSION,
-    REG_R_CONTACT_CHANNELS
-    REG_RW_RELAY_CHANNELS
-    REGISTERS_INPUT_8CH
-    REGISTERS_R
-    REGISTERS_RELAY_R
-    REGISTERS_RELAY_R
+    REG_R_CONTACT_CHANNELS,
+    REG_RW_RELAY_CHANNELS,
+    REGISTERS_INPUT_8CH,
+    REGISTERS_R,
+    REGISTERS_RELAY_R,
 )
 from tests.mocks.modbus_mock import MockModbusResponse
 from tests.conftest import mock_modbus_client
@@ -114,6 +113,7 @@ class TestModbusDataUpdateCoordinator:
         assert data is not None
         assert data[REG_R_ADAPTER_STATUS] == [0x0865]
         assert data[REG_R_ADAPTER_VERSION] is None  # Failed read
+
     @pytest.mark.asyncio
     async def test_async_update_data_all_fail(self, coordinator, mock_modbus_client):
         """Test data update when all reads fail."""
@@ -233,14 +233,14 @@ class TestCoordinatorWithDeviceTypes:
         """Test coordinator with contact splitter registers."""
         master = ModbusMasterCoordinator(
             hass=hass,
-            config_entry=config_entry
+            config_entry=config_entry,
             pool=None,  # type: ignore
             pool_key="tcp:192.168.1.100:502",
             pooled_client=pooled_client,
         )
 
         registers: List[Tuple[int, dict]] = [
-            (REG_R_CONTACT_CHANNELS, REGISTERS_INPUT_8ch[REG_R_CONTACT_CHANNELS]),
+            (REG_R_CONTACT_CHANNELS, REGISTERS_INPUT_8CH[REG_R_CONTACT_CHANNELS]),
         ]
 
         coordinator = ModbusDataUpdateCoordinator(
