@@ -2,6 +2,7 @@
 
 import asyncio
 import sys
+from datetime import timedelta
 from typing import Any, Dict
 from unittest.mock import MagicMock
 
@@ -10,13 +11,45 @@ import pytest
 # Add custom_components to path for imports
 sys.path.insert(0, "custom_components")
 
+
+# Create proper mock classes for Home Assistant coordinator
+class MockDataUpdateCoordinator:
+    """Mock DataUpdateCoordinator that works with async tests."""
+
+    def __init__(self, hass, logger, name, update_interval=None):
+        """Initialize the coordinator."""
+        self.hass = hass
+        self.logger = logger
+        self.name = name
+        self.update_interval = update_interval or timedelta(seconds=30)
+        self.data = None
+
+    async def _async_update_data(self):
+        """Fetch data from the update source."""
+        raise NotImplementedError
+
+
+class UpdateFailed(Exception):
+    """Mock UpdateFailed exception."""
+
+    pass
+
+
+# Create mock module for homeassistant.helpers.update_coordinator
+class MockUpdateCoordinatorModule:
+    """Mock module with proper classes."""
+
+    DataUpdateCoordinator = MockDataUpdateCoordinator
+    UpdateFailed = UpdateFailed
+
+
 # Mock Home Assistant modules before any imports
 sys.modules["homeassistant"] = MagicMock()
 sys.modules["homeassistant.util"] = MagicMock()
 sys.modules["homeassistant.util.dt"] = MagicMock()
 sys.modules["homeassistant.core"] = MagicMock()
 sys.modules["homeassistant.helpers"] = MagicMock()
-sys.modules["homeassistant.helpers.update_coordinator"] = MagicMock()
+sys.modules["homeassistant.helpers.update_coordinator"] = MockUpdateCoordinatorModule()
 sys.modules["homeassistant.helpers.entity"] = MagicMock()
 sys.modules["homeassistant.const"] = MagicMock()
 sys.modules["homeassistant.components"] = MagicMock()
