@@ -130,9 +130,7 @@ class TestModbusDataUpdateCoordinator:
         """Test data update raises UpdateFailed on exception."""
 
         # make the read throw an exception
-        mock_modbus_client.read_holding_registers = AsyncMock(
-            side_effect=ConnectionError("Connection lost")
-        )
+        mock_modbus_client.read_holding_registers = AsyncMock(side_effect=ConnectionError("Connection lost"))
 
         with pytest.raises(UpdateFailed) as exc_info:
             await coordinator._async_update_data()
