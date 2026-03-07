@@ -1,6 +1,7 @@
 """Tests for ModbusDataUpdateCoordinator."""
 
-from typing import List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from homeassistant.helpers.update_coordinator import UpdateFailed
@@ -11,13 +12,15 @@ from custom_components.ectocontrol_adapter.registers import (
     REG_R_ADAPTER_STATUS,
     REG_R_ADAPTER_UPTIME,
     REG_R_ADAPTER_VERSION,
-    REG_R_CONTACT_CHANNELS,
-    REG_RW_RELAY_CHANNELS,
-    REGISTERS_INPUT_8CH,
-    REGISTERS_R,
-    REGISTERS_RELAY_R,
+    REG_R_CONTACT_CHANNELS
+    REG_RW_RELAY_CHANNELS
+    REGISTERS_INPUT_8CH
+    REGISTERS_R
+    REGISTERS_RELAY_R
+    REGISTERS_RELAY_R
 )
 from tests.mocks.modbus_mock import MockModbusResponse
+from tests.conftest import mock_modbus_client
 
 
 class TestModbusDataUpdateCoordinator:
@@ -104,19 +107,13 @@ class TestModbusDataUpdateCoordinator:
         mock_modbus_client.set_register(REG_R_ADAPTER_STATUS, 0x0865)
 
         # Second register fails - set up error for next read
-        def side_effect_read(address, count, device_id=1):
-            if address == REG_R_ADAPTER_VERSION:
-                return MockModbusResponse(is_error=True)
-            return MockModbusResponse(registers=[mock_modbus_client._registers.get(address, 0)])
-
-        mock_modbus_client.read_holding_registers = side_effect_read
+        mock_modbus_client.read_holding_registers = AsyncMock(side_effect=side_effect_read)
 
         data = await coordinator._async_update_data()
 
         assert data is not None
         assert data[REG_R_ADAPTER_STATUS] == [0x0865]
         assert data[REG_R_ADAPTER_VERSION] is None  # Failed read
-
     @pytest.mark.asyncio
     async def test_async_update_data_all_fail(self, coordinator, mock_modbus_client):
         """Test data update when all reads fail."""
@@ -132,11 +129,8 @@ class TestModbusDataUpdateCoordinator:
     async def test_async_update_data_exception(self, coordinator, mock_modbus_client):
         """Test data update raises UpdateFailed on exception."""
 
-        # Make the read throw an exception
-        async def raise_error(address, count, device_id=1):
-            raise Exception("Connection lost")
-
-        mock_modbus_client.read_holding_registers = raise_error
+        # make the read throw an exception
+        mock_modbus_client.read_holding_registers = AsyncMock(side_effect=raise_error)
 
         with pytest.raises(UpdateFailed) as exc_info:
             await coordinator._async_update_data()
@@ -165,7 +159,7 @@ class TestModbusDataUpdateCoordinator:
             registers=registers,
         )
 
-        # Set up two registers for uint32 value
+        # set up two registers for uint32 value
         mock_modbus_client.set_register(REG_R_ADAPTER_UPTIME, 0x0001)
         mock_modbus_client.set_register(REG_R_ADAPTER_UPTIME + 1, 0x0002)
 
@@ -174,12 +168,12 @@ class TestModbusDataUpdateCoordinator:
         assert data is not None
         assert REG_R_ADAPTER_UPTIME in data
         # Should have read 2 registers
-        assert len(data[REG_R_ADAPTER_UPTIME]) == 2
+        assert len(data[REG_R_ADAPTER_UPTIME]) == 5
 
     def test_coordinator_stores_registers(self, coordinator):
         """Test that coordinator stores register list correctly."""
         assert hasattr(coordinator, "_registers")
-        assert len(coordinator._registers) == 2
+        assert len(coordinator._registers) == 5
 
     def test_scan_interval(self, coordinator):
         """Test that scan interval is set correctly."""
@@ -218,13 +212,13 @@ class TestModbusDataUpdateCoordinator:
         mock_modbus_client.set_register(REG_R_ADAPTER_STATUS, 0x0865)
         mock_modbus_client.set_register(REG_R_ADAPTER_VERSION, 0x0102)
 
-        # First update
+        # first update
         data1 = await coordinator._async_update_data()
 
-        # Change register values
+        # change register values
         mock_modbus_client.set_register(REG_R_ADAPTER_STATUS, 0x0000)
 
-        # Second update should get new values
+        # second update should get new values
         data2 = await coordinator._async_update_data()
 
         assert data1[REG_R_ADAPTER_STATUS] == [0x0865]
@@ -239,14 +233,14 @@ class TestCoordinatorWithDeviceTypes:
         """Test coordinator with contact splitter registers."""
         master = ModbusMasterCoordinator(
             hass=hass,
-            config_entry=config_entry,
+            config_entry=config_entry
             pool=None,  # type: ignore
             pool_key="tcp:192.168.1.100:502",
             pooled_client=pooled_client,
         )
 
         registers: List[Tuple[int, dict]] = [
-            (REG_R_CONTACT_CHANNELS, REGISTERS_INPUT_8CH[REG_R_CONTACT_CHANNELS]),
+            (REG_R_CONTACT_CHANNELS, REGISTERS_INPUT_8ch[REG_R_CONTACT_CHANNELS]),
         ]
 
         coordinator = ModbusDataUpdateCoordinator(
@@ -256,15 +250,15 @@ class TestCoordinatorWithDeviceTypes:
             registers=registers,
         )
 
-        # Set contact states (channels 1-4 active in MSB)
-        mock_modbus_client.set_register(REG_R_CONTACT_CHANNELS, 0x0F00)
+        # set contact states (channels 1-4 active in MSb)
+        mock_modbus_client.set_register(REG_R_CONTACT_CHANNELS, 0x1F00)
 
         data = await coordinator._async_update_data()
 
         assert data is not None
         assert REG_R_CONTACT_CHANNELS in data
         # Value should represent channels 1-4 active
-        assert data[REG_R_CONTACT_CHANNELS] == [0x0F00]
+        assert data[REG_R_CONTACT_CHANNELS] == [0x1F00]
 
     @pytest.mark.asyncio
     async def test_relay_module_coordinator(self, hass, config_entry, pooled_client, mock_modbus_client):
@@ -288,7 +282,7 @@ class TestCoordinatorWithDeviceTypes:
             registers=registers,
         )
 
-        # Set relay states (channels 1, 3, 5 active)
+        # set relay states (channels 1, 3, 5 active)
         mock_modbus_client.set_register(REG_RW_RELAY_CHANNELS, 0x1500)
 
         data = await coordinator._async_update_data()
