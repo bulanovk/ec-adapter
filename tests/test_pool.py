@@ -1,27 +1,6 @@
-"""Tests for Modbus client connection pool.
+"""Tests for Modbus client connection pool."""
 
-Tests the connection pool logic without importing from the custom component.
-"""
-
-from typing import Any, Dict
-
-
-def _get_pool_key(config: Dict[str, Any]) -> str:
-    """Generate a unique key for connection pooling based on connection config.
-
-    This is a copy of the function from pool.py for isolated testing.
-    """
-    modbus_type = config.get("modbus_type", "")
-
-    if modbus_type == "serial":
-        return (
-            f"serial:{config.get('device')}:{config.get('baudrate')}:"
-            f"{config.get('parity')}:{config.get('stopbits')}:{config.get('bytesize')}"
-        )
-    elif modbus_type in ("tcp", "udp", "rtuovertcp"):
-        return f"{modbus_type}:{config.get('host')}:{config.get('port')}"
-    else:
-        return f"unknown:{id(config)}"
+from custom_components.ectocontrol_adapter.pool import ModbusClientPool, PooledClient, _get_pool_key
 
 
 class TestGetPoolKey:
@@ -222,3 +201,55 @@ class TestPoolKeyUniqueness:
         key1 = _get_pool_key(config1)
         key2 = _get_pool_key(config2)
         assert key1 != key2
+
+
+class TestPooledClient:
+    """Tests for PooledClient class."""
+
+    def test_pooled_client_initialization(self):
+        """Test PooledClient initialization."""
+        config = {
+            "modbus_type": "tcp",
+            "host": "192.168.1.100",
+            "port": 502,
+            "response_timeout": 5,
+        }
+        client = PooledClient(config)
+        assert client.ref_count == 0
+        assert client.is_connected is False
+
+    def test_pooled_client_ref_count_property(self):
+        """Test PooledClient ref_count property."""
+        config = {"modbus_type": "tcp", "host": "192.168.1.100", "port": 502}
+        client = PooledClient(config)
+        assert client.ref_count == 0
+        # Manually increment to test property
+        client._ref_count = 5
+        assert client.ref_count == 5
+
+
+class TestModbusClientPool:
+    """Tests for ModbusClientPool class."""
+
+    def test_pool_initialization(self):
+        """Test ModbusClientPool initialization."""
+        pool = ModbusClientPool()
+        assert pool._pools == {}
+
+    def test_pool_get_nonexistent(self):
+        """Test getting a non-existent pool key."""
+        pool = ModbusClientPool()
+        result = pool.get("nonexistent:key")
+        assert result is None
+
+    def test_pool_get_pool_key(self):
+        """Test getting the pool key for a config."""
+        config = {
+            "modbus_type": "tcp",
+            "host": "192.168.1.100",
+            "port": 502,
+        }
+        # The pool key is generated internally by _get_pool_key
+        expected_key = "tcp:192.168.1.100:502"
+        actual_key = _get_pool_key(config)
+        assert actual_key == expected_key
