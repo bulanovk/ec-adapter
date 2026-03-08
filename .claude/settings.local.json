@@ -31,7 +31,9 @@
       "mcp__plugin_playwright_playwright__browser_navigate_back",
       "Bash(python:*)",
       "Bash(.venv/bin/python:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(source:*)",
+      "Bash(cat:*)"
     ]
   }
 }

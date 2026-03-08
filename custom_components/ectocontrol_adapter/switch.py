@@ -1,7 +1,8 @@
 """Switch entities for ectoControl adapter."""
 
+import asyncio
 import logging
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -23,7 +24,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     master_coordinator = data["master_coordinator"]
     write_registers = data["write_registers"]
 
-    entities = []
+    entities: List[ModbusSwitch] = []
+    bitmask_switches: List["ModbusBitmaskSwitch"] = []
 
     for register, config in write_registers.items():
         input_type = config.get("input_type")
@@ -35,11 +37,38 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         # Bitmask switches - multiple entities from one register
         elif input_type == BITMASK_SWITCH_INPUT:
             for bit_config in config.get("bit_switches", []):
-                entities.append(
-                    ModbusBitmaskSwitch(hass, master_coordinator, register, config, bit_config, bit_config["bit"])
+                switch_entity = ModbusBitmaskSwitch(
+                    hass, master_coordinator, register, config, bit_config, bit_config["bit"]
                 )
+                entities.append(switch_entity)
+                bitmask_switches.append(switch_entity)
 
     async_add_entities(entities)
+
+    # After entities are added, restore relay states in parallel
+    if bitmask_switches:
+        hass.async_create_task(
+            config_entry.runtime_data,
+            _batch_restore_relays(bitmask_switches),
+            "ectocontrol_relay_restore",
+        )
+
+
+async def _batch_restore_relays(bitmask_switches: List["ModbusBitmaskSwitch"]) -> None:
+    """Restore all relay states to device in parallel after startup.
+
+    This batches relay restoration to avoid sequential blocking. All relay
+    writes are executed in parallel using asyncio.gather.
+    """
+    restore_tasks = []
+
+    for switch in bitmask_switches:
+        if switch._pending_restore_state is not None:
+            restore_tasks.append(switch._restore_state_to_device())
+
+    if restore_tasks:
+        _LOGGER.info(f"Restoring {len(restore_tasks)} relay states in parallel")
+        await asyncio.gather(*restore_tasks, return_exceptions=True)
 
 
 class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
@@ -68,7 +97,7 @@ class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
         self._attr_has_entity_name = True
         self._attr_translation_key = self.register_config.get("name")
         self._attr_unique_id = f"{self._unique_id_prefix}_{self._attr_translation_key}_{register_addr:#06x}"
-        self._attr_is_on = None  # Initial state is unknown
+        self._attr_is_on: Optional[bool] = None
         self._attr_device_class = register_config.get("device_class")
         self._attr_entity_category = register_config.get("category")
 
@@ -132,7 +161,7 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
     """Switch entity that controls a single bit in a register.
 
     HA is the source of truth. State is restored from HA persistence on reboot
-    and synced to device when connectivity is restored.
+    and synced to device in parallel with other relays after startup.
     """
 
     def __init__(
@@ -171,28 +200,45 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
 
         # HA is source of truth - default to False so switch shows as toggle
         self._attr_is_on: bool = False
+        # Pending state for batch restoration (None = no restoration needed)
+        self._pending_restore_state: Optional[bool] = None
 
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self._master_coordinator.config_entry.entry_id)})
 
     async def async_added_to_hass(self):
-        """Restore state from persistence and write to device immediately."""
+        """Restore state from persistence and queue for batch restoration."""
         await super().async_added_to_hass()
         last_state = await self.async_get_last_state()
 
         if last_state is not None:
             if last_state.state == "on":
                 self._attr_is_on = True
+                self._pending_restore_state = True
             elif last_state.state == "off":
                 self._attr_is_on = False
+                self._pending_restore_state = False
+            # If state was unknown, no restoration needed
 
-        # If we have a known state from HA persistence, write it to device immediately
-        # This ensures state is restored on reboot without waiting for connectivity changes
-        if self._attr_is_on is not None:
-            _LOGGER.info(
-                f"Restoring relay '{self._attr_translation_key}' "
-                f"state={'ON' if self._attr_is_on else 'OFF'} to device"
+    async def _restore_state_to_device(self) -> None:
+        """Restore the pending state to device.
+
+        Called by _batch_restore_relays() after all entities are added.
+        """
+        if self._pending_restore_state is None:
+            return
+
+        value = self._pending_restore_state
+        _LOGGER.info(
+            f"Restoring relay '{self._attr_translation_key}' "
+            f"state={'ON' if value else 'OFF'} to device"
+        )
+        success = await self._write_state_to_device(value)
+        if not success:
+            _LOGGER.warning(
+                f"Failed to restore relay '{self._attr_translation_key}' state to device"
             )
-            await self._write_state_to_device(self._attr_is_on)
+        # Clear pending state after restoration attempt
+        self._pending_restore_state = None
 
     async def async_turn_on(self, **kwargs):
         """Turn the switch on."""

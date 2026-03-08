@@ -14,7 +14,7 @@ from .mixins import ModbusUniqIdMixin
 from .registers import NUMBER_INPUT, REG_DEFAULT_NUMBER_STEP
 
 _LOGGER = logging.getLogger(__name__)
-_SUBSCRIBE_ATTEMPTS_DELAY = 5
+_SUBSCRIBE_ATTEMPTS_DELAY = 1  # Reduced from 5 for faster startup
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
