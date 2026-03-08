@@ -96,7 +96,6 @@ REG_W_DHW_MAX_TEMP = 0x0036
 REG_W_DHW_TEMP = 0x0037
 REG_W_BURNER_MODULATION = 0x0038
 REG_W_MODE = 0x0039
-REG_W_CIRCUIT_ENABLE = 0x003A
 
 # Command registers
 REG_W_COMMAND = 0x0080
@@ -744,28 +743,6 @@ REGISTERS_W = {
             "heating_dwh": 0b011,
             "heating_second": 0b101,
         },
-    },
-    # Bitmask switch - multiple switches from one register
-    REG_W_CIRCUIT_ENABLE: {
-        "name": "circuit_enable",
-        "input_type": BITMASK_SWITCH_INPUT,
-        "bit_switches": [
-            {
-                "bit": 0,
-                "name": "heating_enable",
-                "icon": "mdi:heating-coil",
-            },
-            {
-                "bit": 1,
-                "name": "dhw_enable",
-                "icon": "mdi:water-pump",
-            },
-            {
-                "bit": 2,
-                "name": "second_circuit_enable",
-                "icon": "mdi:heating-coil",
-            },
-        ],
     },
     REG_W_COMMAND: {
         "name": "command",

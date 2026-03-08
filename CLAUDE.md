@@ -265,37 +265,25 @@ bitmasks: {
 
 ### Bitmask Switch Configuration
 
-Bitmask switches allow controlling individual bits within a single register. Each bit creates a separate switch entity:
+Bitmask switches allow controlling individual bits within a single register. Each bit creates a separate switch entity. Used by Relay Modules (device types 0xC0, 0xC1):
 
 ```python
-REG_W_CIRCUIT_ENABLE = 0x003A
+REG_RW_RELAY_CHANNELS = 0x0010
 
-REGISTERS_W = {
-    REG_W_CIRCUIT_ENABLE: {
-        "name": "circuit_enable",
+REGISTERS_RELAY_W = {
+    REG_RW_RELAY_CHANNELS: {
+        "name": "relay_channels",
         "input_type": BITMASK_SWITCH_INPUT,
         "bit_switches": [
-            {
-                "bit": 0,
-                "name": "heating_enable",
-                "icon": "mdi:heating-coil",
-            },
-            {
-                "bit": 1,
-                "name": "dhw_enable",
-                "icon": "mdi:water-pump",
-            },
-            {
-                "bit": 2,
-                "name": "second_circuit_enable",
-                "icon": "mdi:heating-coil",
-            },
+            {"bit": 8, "name": "relay_1"},
+            {"bit": 9, "name": "relay_2"},
+            # ... more relays
         ]
     },
 }
 ```
 
-This creates three independent switch entities that control bits 0, 1, and 2 of register 0x003A using read-modify-write operations.
+This creates independent switch entities that control individual bits using read-modify-write operations.
 
 ## Debugging
 
