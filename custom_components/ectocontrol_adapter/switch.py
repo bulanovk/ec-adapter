@@ -228,15 +228,10 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
             return
 
         value = self._pending_restore_state
-        _LOGGER.info(
-            f"Restoring relay '{self._attr_translation_key}' "
-            f"state={'ON' if value else 'OFF'} to device"
-        )
+        _LOGGER.info(f"Restoring relay '{self._attr_translation_key}' " f"state={'ON' if value else 'OFF'} to device")
         success = await self._write_state_to_device(value)
         if not success:
-            _LOGGER.warning(
-                f"Failed to restore relay '{self._attr_translation_key}' state to device"
-            )
+            _LOGGER.warning(f"Failed to restore relay '{self._attr_translation_key}' state to device")
         # Clear pending state after restoration attempt
         self._pending_restore_state = None
 
