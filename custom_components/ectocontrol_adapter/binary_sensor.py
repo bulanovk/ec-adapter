@@ -32,7 +32,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                         sensor = ModbusBinarySensor(coordinator, register, config, mask)
                         sensors.append(sensor)
 
-    async_add_entities(sensors, True)
+    _LOGGER.debug(f"Adding {len(sensors)} binary sensors")
+    async_add_entities(sensors)
 
 
 class ModbusBinarySensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, BinarySensorEntity):

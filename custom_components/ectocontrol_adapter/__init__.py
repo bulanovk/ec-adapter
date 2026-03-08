@@ -19,6 +19,7 @@ from .const import (
     DEVICE_TYPE_RELAY_BLOCK_10CH,
     DOMAIN,
     OPT_NAME,
+    OPT_SLAVE,
 )
 from .coordinator import ModbusDataUpdateCoordinator
 from .master import ModbusMasterCoordinator
@@ -47,6 +48,13 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Set up sensors from a config entry."""
     config: Dict[str, Any] = dict(config_entry.options or config_entry.data)
+
+    # Migration: Ensure slave is int for consistent unique IDs (fixes float stored in older configs)
+    if OPT_SLAVE in config and isinstance(config[OPT_SLAVE], float):
+        _LOGGER.info(f"Migrating slave from float {config[OPT_SLAVE]} to int {int(config[OPT_SLAVE])}")
+        config[OPT_SLAVE] = int(config[OPT_SLAVE])
+        # Update the stored config
+        hass.config_entries.async_update_entry(config_entry, options=config)
 
     # Create device
     device_registry = dr.async_get(hass)

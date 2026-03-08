@@ -123,15 +123,17 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
 
         sensor_unique_id = f"{self._unique_id_prefix}_{sensor_name}_{sensor_addr:#06x}"
         entity_id = reg.async_get_entity_id(Platform.BINARY_SENSOR, DOMAIN, sensor_unique_id)
+
         if entity_id:
             self.async_on_remove(
                 async_track_state_change_event(self.hass, entity_id, self._handle_write_after_connected)
             )
-            _LOGGER.debug(f"Subscribe to '{entity_id}' for '{self._attr_translation_key}': SUCCESS")
+            _LOGGER.info(f"Subscribed to '{entity_id}' for '{self._attr_translation_key}'")
         else:
             if attempt < max_attempts:
                 _LOGGER.debug(
-                    f"Subscription attempt '{attempt}' to '{sensor_unique_id}' " f"failed, try again in 5 seconds..."
+                    f"Subscription attempt {attempt}/{max_attempts} to '{sensor_unique_id}' failed, "
+                    f"retrying in {_SUBSCRIBE_ATTEMPTS_DELAY}s..."
                 )
                 async_call_later(
                     hass=self.hass,
@@ -140,7 +142,9 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
                 )
             else:
                 _LOGGER.error(
-                    f"Unable to find entity '{sensor_unique_id}' " f"to subscribe to after '{max_attempts}' attempts"
+                    f"Failed to subscribe to connectivity sensor after {max_attempts} attempts. "
+                    f"Expected unique_id: '{sensor_unique_id}'. "
+                    f"Verify the binary_sensor platform is creating entities with matching unique IDs."
                 )
 
     async def _handle_write_after_connected(self, event):

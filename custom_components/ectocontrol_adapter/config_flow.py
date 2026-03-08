@@ -198,6 +198,8 @@ class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         errors = {}
         if user_input is not None:
+            # Ensure slave is stored as int for consistent unique IDs
+            user_input[OPT_SLAVE] = int(user_input[OPT_SLAVE])
             self.config_data.update(user_input)
             pool = _get_pool(self.hass)
             errors = await check_user_input(self.config_data, pool)
@@ -256,6 +258,8 @@ class ECAdapterOptionsFlow(config_entries.OptionsFlow):
 
         errors = {}
         if user_input is not None:
+            # Ensure slave is stored as int for consistent unique IDs
+            user_input[OPT_SLAVE] = int(user_input[OPT_SLAVE])
             self.config_data.update(user_input)
             pool = _get_pool(self.hass)
             errors = await check_user_input(self.config_data, pool)
