@@ -103,6 +103,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
         # Get register configuration for this device type
         device_def = DEVICE_TYPE_DEFS.get(device_type_key)
+        _LOGGER.debug(
+            "Looking up device_type_key=%s (type=%s) in DEVICE_TYPE_DEFS, found=%s, available_keys=%s",
+            device_type_key,
+            type(device_type_key),
+            device_def is not None,
+            list(DEVICE_TYPE_DEFS.keys()),
+        )
         if device_def:
             read_regs = cast(Dict[int, Dict[str, Any]], device_def.get("read_registers", REGISTERS_R))
             write_regs = cast(Dict[int, Dict[str, Any]], device_def.get("write_registers", REGISTERS_W))
