@@ -48,7 +48,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     # After entities are added, restore relay states in parallel
     if bitmask_switches:
         hass.async_create_task(
-            config_entry.runtime_data,
             _batch_restore_relays(bitmask_switches),
             "ectocontrol_relay_restore",
         )
