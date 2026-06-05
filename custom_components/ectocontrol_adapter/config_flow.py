@@ -185,6 +185,10 @@ class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         _LOGGER.debug("Request to create config (init step): %s", user_input)
 
         if user_input is not None:
+            # Ensure slave is stored as int for consistent unique IDs
+            # (NumberSelector with mode=BOX returns a float by default)
+            if OPT_SLAVE in user_input:
+                user_input[OPT_SLAVE] = int(user_input[OPT_SLAVE])
             self.config_data.update(user_input)
             self.next_step = self.async_step_connection
             return await self.async_step_connection()
@@ -198,8 +202,9 @@ class ECAdapterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         errors = {}
         if user_input is not None:
-            # Ensure slave is stored as int for consistent unique IDs
-            user_input[OPT_SLAVE] = int(user_input[OPT_SLAVE])
+            # Connection form (host/port or device/baudrate/...) does not include
+            # OPT_SLAVE — it was collected in the init step and stored in
+            # self.config_data as an int. Nothing to convert here.
             self.config_data.update(user_input)
             pool = _get_pool(self.hass)
             errors = await check_user_input(self.config_data, pool)
@@ -241,6 +246,10 @@ class ECAdapterOptionsFlow(config_entries.OptionsFlow):
 
         errors = {}
         if user_input is not None:
+            # Ensure slave is stored as int for consistent unique IDs
+            # (NumberSelector with mode=BOX returns a float by default)
+            if OPT_SLAVE in user_input:
+                user_input[OPT_SLAVE] = int(user_input[OPT_SLAVE])
             self.config_data.update(user_input)
             self.next_step = self.async_step_connection
             return await self.async_step_connection()
@@ -258,8 +267,9 @@ class ECAdapterOptionsFlow(config_entries.OptionsFlow):
 
         errors = {}
         if user_input is not None:
-            # Ensure slave is stored as int for consistent unique IDs
-            user_input[OPT_SLAVE] = int(user_input[OPT_SLAVE])
+            # Connection form (host/port or device/baudrate/...) does not include
+            # OPT_SLAVE — it was collected in the init step and stored in
+            # self.config_data as an int. Nothing to convert here.
             self.config_data.update(user_input)
             pool = _get_pool(self.hass)
             errors = await check_user_input(self.config_data, pool)
