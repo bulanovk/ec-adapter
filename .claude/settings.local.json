@@ -1,39 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(wc:*)",
-      "Bash(find D:\\\\projects\\\\ecto\\\\ec-adapter\\\\custom_components\\\\ectocontrol_adapter:*)",
-      "Bash(gh run:*)",
-      "Bash(mv:*)",
-      "Bash(curl:*)",
-      "Bash(sed:*)",
-      "mcp__plugin_playwright_playwright__browser_navigate",
-      "mcp__plugin_playwright_playwright__browser_click",
-      "mcp__plugin_playwright_playwright__browser_snapshot",
-      "mcp__plugin_playwright_playwright__browser_close",
-      "Bash(file:*)",
-      "Bash(black:*)",
-      "Bash(rm:*)",
-      "Bash(pip:*)",
-      "mcp__plugin_playwright_playwright__browser_wait_for",
-      "Bash(flake8:*)",
-      "Bash(isort:*)",
-      "Bash(test:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git:*)",
-      "Bash(python3.13:*)",
-      "Bash(where:*)",
-      "Bash(py:*)",
-      "Bash(.venv/Scripts/python.exe:*)",
-      "Bash(.venv/Scripts/pip.exe install:*)",
-      "Skill(commit-commands:commit)",
-      "mcp__plugin_playwright_playwright__browser_navigate_back",
-      "Bash(python:*)",
-      "Bash(.venv/bin/python:*)",
-      "Bash(python3:*)",
-      "Bash(source:*)",
-      "Bash(cat:*)"
+      "Bash"
     ]
   }
 }
