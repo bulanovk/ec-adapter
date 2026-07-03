@@ -14,7 +14,7 @@ This is a Home Assistant custom component that integrates ectoControl adapters f
 
 **Component location:** `custom_components/ectocontrol_adapter/`
 
-**External dependency:** pymodbus==3.11.2
+**External dependency:** pymodbus==3.13.1
 
 ## File Structure
 
