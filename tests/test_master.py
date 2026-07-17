@@ -287,12 +287,76 @@ class TestModbusMasterCoordinatorSlaveId:
 
     @pytest.mark.asyncio
     async def test_uses_options_slave_id(self, master_with_options, mock_modbus_client):
-        """Test that options slave ID is used instead of data slave ID."""
+        """Test that options slave ID is used instead of data slave ID.
+
+        Asserts on every underlying Modbus call's device_id (warmup + real op),
+        not on call count, so the sacrificial warmup read of 0x0010 does not
+        break the contract this test is establishing.
+        """
         mock_modbus_client.set_register(0x0010, 0x1234)
 
         await master_with_options.read_holding_registers(0x0010, 1)
 
-        # Check that the read was called with device_id from options (2)
         calls = mock_modbus_client.get_read_calls()
-        assert len(calls) == 1
-        assert calls[0]["device_id"] == 2  # From options, not data (1)
+        assert len(calls) >= 1, "Expected at least one underlying read"
+        # Every read — warmup and real — must carry the options slave_id (2),
+        # not the data slave_id (1).
+        assert all(
+            c["device_id"] == 2 for c in calls
+        ), f"All reads must use options slave_id=2, got: {[c['device_id'] for c in calls]}"
+
+
+class TestModbusMasterCoordinatorWarmup:
+    """Tests for one-shot Modbus warmup to mitigate slow first-response behavior.
+
+    The ectoControl Relay Block 10ch (device type 0xC1) takes ~5 seconds to
+    respond to its first Modbus transaction after a long idle period. pymodbus
+    3.13.1's strict response_timeout fires just before the device's slow
+    response arrives, causing cascading timeouts and retries.
+
+    The coordinator must perform a sacrificial warmup read of the generic
+    device-info registers (0x0000-0x0003) before the first real operation, so
+    the 5-second startup latency is absorbed once instead of repeated. These
+    registers exist on every ectoControl device type (boiler adapters, contact
+    splitter, relay blocks) — see PROTOCOL.md device-info table.
+    """
+
+    @pytest.mark.asyncio
+    async def test_first_op_triggers_warmup_of_generic_device_info_registers(
+        self, master_coordinator, mock_modbus_client
+    ):
+        """First op must be preceded by a warmup read of registers 0x0000-0x0003."""
+        mock_modbus_client.set_register(0x0000, 0x0000)
+        mock_modbus_client.set_register(0x0020, 0xABCD)
+
+        await master_coordinator.read_holding_registers(0x0020, 1)
+
+        calls = mock_modbus_client.get_read_calls()
+        assert len(calls) == 2, f"Expected warmup + real op, got {len(calls)} reads"
+        assert calls[0]["address"] == 0x0000, "First read must be warmup of generic device info registers"
+        assert calls[0]["count"] == 4, "Warmup must read the full 0x0000-0x0003 device info block"
+        assert calls[1]["address"] == 0x0020, "Second read must be the real op"
+
+    @pytest.mark.asyncio
+    async def test_warmup_only_runs_once(self, master_coordinator, mock_modbus_client):
+        """Warmup must not run again on subsequent operations."""
+        mock_modbus_client.set_register(0x0000, 0x0000)
+
+        await master_coordinator.read_holding_registers(0x0020, 1)
+        await master_coordinator.read_holding_registers(0x0030, 1)
+        await master_coordinator.write_registers(0x0040, [0x9999])
+
+        reads = mock_modbus_client.get_read_calls()
+        warmup_reads = [c for c in reads if c["address"] == 0x0000]
+        assert len(warmup_reads) == 1, f"Warmup must run exactly once, got {len(warmup_reads)}"
+
+    @pytest.mark.asyncio
+    async def test_warmup_failure_does_not_block_real_op(self, master_coordinator, mock_modbus_client):
+        """If warmup read fails, real operation must still execute and surface the error."""
+        mock_modbus_client.set_read_error(True)
+
+        result = await master_coordinator.read_holding_registers(0x0020, 1)
+
+        calls = mock_modbus_client.get_read_calls()
+        assert len(calls) == 2, "Both warmup and real op should have been attempted"
+        assert result.isError(), "Real op should propagate error result when device is unreachable"
