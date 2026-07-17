@@ -301,9 +301,9 @@ class TestModbusMasterCoordinatorSlaveId:
         assert len(calls) >= 1, "Expected at least one underlying read"
         # Every read — warmup and real — must carry the options slave_id (2),
         # not the data slave_id (1).
-        assert all(c["device_id"] == 2 for c in calls), (
-            f"All reads must use options slave_id=2, got: {[c['device_id'] for c in calls]}"
-        )
+        assert all(
+            c["device_id"] == 2 for c in calls
+        ), f"All reads must use options slave_id=2, got: {[c['device_id'] for c in calls]}"
 
 
 class TestModbusMasterCoordinatorWarmup:
@@ -351,9 +351,7 @@ class TestModbusMasterCoordinatorWarmup:
         assert len(warmup_reads) == 1, f"Warmup must run exactly once, got {len(warmup_reads)}"
 
     @pytest.mark.asyncio
-    async def test_warmup_failure_does_not_block_real_op(
-        self, master_coordinator, mock_modbus_client
-    ):
+    async def test_warmup_failure_does_not_block_real_op(self, master_coordinator, mock_modbus_client):
         """If warmup read fails, real operation must still execute and surface the error."""
         mock_modbus_client.set_read_error(True)
 
