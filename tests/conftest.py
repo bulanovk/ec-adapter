@@ -2,6 +2,7 @@
 
 import asyncio
 import sys
+import types
 from datetime import timedelta
 from typing import Any, Dict
 from unittest.mock import MagicMock
@@ -43,8 +44,55 @@ class MockUpdateCoordinatorModule:
     UpdateFailed = UpdateFailed
 
 
+# Real stub classes for config_entries. Using real classes (not MagicMock) is
+# required so that `class ECAdapterConfigFlow(config_entries.ConfigFlow, ...)`
+# yields a real class, not a MagicMock subclass whose instances have
+# auto-generated attributes and break `await self.async_step_*()`.
+class _StubConfigFlow:
+    """Stub base for homeassistant.config_entries.ConfigFlow.
+
+    Real HA's ConfigFlow inherits from FlowHandler and uses __init_subclass__
+    kwargs (like domain=...). For unit tests of step methods we only need a
+    real class so subclassing and instantiation work, and self.<method_name>()
+    resolves to the actual ECAdapterConfigFlow methods.
+    """
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        # Swallow 'domain=...' (and any other HA internals) — we don't need
+        # the real flow-handler registration for unit tests.
+        super().__init_subclass__()
+
+
+class _StubOptionsFlow:
+    """Stub base for homeassistant.config_entries.OptionsFlow."""
+
+    pass
+
+
+class _StubConfigEntry:
+    """Stub for homeassistant.config_entries.ConfigEntry (used only as a type)."""
+
+    pass
+
+
+# Build a real module object for homeassistant.config_entries so that
+# `from homeassistant import config_entries` inside ectocontrol_adapter.config_flow
+# binds to a real module whose .ConfigFlow attribute is a class.
+_ce_module = types.ModuleType("homeassistant.config_entries")
+_ce_module.ConfigFlow = _StubConfigFlow
+_ce_module.OptionsFlow = _StubOptionsFlow
+_ce_module.ConfigEntry = _StubConfigEntry
+
 # Mock Home Assistant modules before any imports
 sys.modules["homeassistant"] = MagicMock()
+# Override the MagicMock's auto-generated .config_entries attribute with our
+# real module. Without this, `from homeassistant import config_entries`
+# returns a MagicMock child and ECAdapterConfigFlow inherits from MagicMock,
+# so ECAdapterConfigFlow() yields a MagicMock and `await flow.async_step_*()`
+# raises "object MagicMock can't be used in 'await' expression".
+sys.modules["homeassistant"].config_entries = _ce_module
+sys.modules["homeassistant.config_entries"] = _ce_module
+
 sys.modules["homeassistant.util"] = MagicMock()
 sys.modules["homeassistant.util.dt"] = MagicMock()
 sys.modules["homeassistant.core"] = MagicMock()

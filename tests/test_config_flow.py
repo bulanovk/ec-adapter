@@ -1,19 +1,13 @@
 """Tests for ectoControl adapter config flow."""
 
-# Mock HA modules that the config flow imports but aren't already mocked in conftest
-import sys
+# conftest.py installs real stub classes (ConfigFlow, OptionsFlow, ConfigEntry)
+# on homeassistant.config_entries BEFORE this module is imported, so
+# `from homeassistant import config_entries` inside config_flow.py yields a
+# real module and ECAdapterConfigFlow subclasses a real class.
 from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-_MOCK_MODULES = [
-    "homeassistant.config_entries",
-    "homeassistant.helpers.dispatcher",
-    "homeassistant.helpers.selector",
-]
-for _name in _MOCK_MODULES:
-    sys.modules.setdefault(_name, MagicMock())
 
 
 def _make_config_flow():
@@ -38,6 +32,10 @@ def _make_options_flow(config_entry: Any = None):
         config_entry.data = {"name": "Test", "modbus_type": "tcp", "host": "1.2.3.4", "port": 502, "slave": 1}
         config_entry.options = {}
     flow = ECAdapterOptionsFlow(config_entry)
+    # Real HA's OptionsFlow base class (>= 2024.12) sets self.config_entry
+    # in its own __init__. Our stub OptionsFlow doesn't replicate that, so we
+    # assign it here — this mirrors the production behaviour the code depends on.
+    flow.config_entry = config_entry
     flow.hass = MagicMock()
     flow.async_show_form = MagicMock(return_value={"type": "form"})
     flow.async_create_entry = MagicMock(return_value={"type": "create_entry"})
