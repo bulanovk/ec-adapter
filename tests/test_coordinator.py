@@ -103,20 +103,18 @@ class TestModbusDataUpdateCoordinator:
         # Set up registers
         mock_modbus_client.set_register(REG_R_ADAPTER_STATUS, 0x0865)
 
-        # Make the mock return error responses for subsequent reads
-        # Use isError() returning True to simulate Modbus error response
-        read_count = 0
+        # Make the mock return error responses for the VERSION register only.
+        # Targeting by register address (not call count) keeps this test robust
+        # against the coordinator's sacrificial warmup read of register 0x0010
+        # that precedes the first real op.
         original_read = mock_modbus_client.read_holding_registers
 
-        async def read_with_error(*args, **kwargs):
-            nonlocal read_count
-            read_count += 1
-            if read_count == 2:
-                # Second read returns error response
+        async def read_with_error(address, count, device_id=1):
+            if address == REG_R_ADAPTER_VERSION:
                 from tests.mocks.modbus_mock import MockModbusResponse
 
                 return MockModbusResponse(is_error=True)
-            return await original_read(*args, **kwargs)
+            return await original_read(address, count, device_id)
 
         mock_modbus_client.read_holding_registers = read_with_error
 
