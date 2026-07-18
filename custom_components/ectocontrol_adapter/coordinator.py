@@ -58,16 +58,16 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.error(error)
             raise ValueError(error)
 
-        # Default to True — first cycle reads all registers
-        self._boiler_comm_ok = True
-
     async def _async_update_data(self):
         data = {}
         t_cycle_start = time.monotonic()
         try:
             for register, reg_config in self._registers:
-                # Skip boiler-dependent registers when boiler comm is down
-                if not self._boiler_comm_ok and register in REG_BOILER_DEPENDENT:
+                # Skip boiler-dependent registers when boiler comm is down.
+                # Use master.boiler_comm_ok (shared across all coordinators)
+                # because registers are split across scan-interval groups —
+                # only the coordinator that owns 0x0010 detects the change.
+                if not self._master.boiler_comm_ok and register in REG_BOILER_DEPENDENT:
                     data[register] = None
                     continue
 
@@ -96,11 +96,12 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
 
                     # Detect boiler communication status from register 0x0010 bit 3.
                     # Only meaningful for OpenTherm / eBus / Navien device types.
+                    # Update master.boiler_comm_ok so ALL coordinators see the change,
+                    # not just the one whose scan_interval group contains 0x0010.
                     if self._has_boiler_comm and register == 0x0010 and result.registers:
                         lsb = result.registers[0] & 0xFF
                         comm_ok = bool(lsb & BOILER_COMM_BIT)
-                        if comm_ok != self._boiler_comm_ok:
-                            self._boiler_comm_ok = comm_ok
+                        if comm_ok != self._master.boiler_comm_ok:
                             self._master.boiler_comm_ok = comm_ok
                             _LOGGER.info(
                                 "Boiler communication %s (0x0010 LSB=0x%02X)",
@@ -115,5 +116,5 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
                 len(self._registers),
                 time.monotonic() - t_cycle_start,
             )
-        data[_BOILER_COMM_OK] = self._boiler_comm_ok
+        data[_BOILER_COMM_OK] = self._master.boiler_comm_ok
         return data
