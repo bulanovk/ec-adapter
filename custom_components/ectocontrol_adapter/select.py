@@ -56,6 +56,13 @@ class ModbusSelect(ModbusUniqIdMixin, SelectEntity, RestoreEntity):
         # Device info
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
+    @property
+    def available(self) -> bool:
+        """Return True if the boiler is reachable (always True for non-boiler devices)."""
+        if not super().available:
+            return False
+        return self.coordinator.boiler_comm_ok
+
     async def async_added_to_hass(self):
         """Restore state from HA persistence."""
         await super().async_added_to_hass()

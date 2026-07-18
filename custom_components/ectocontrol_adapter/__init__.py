@@ -14,7 +14,10 @@ from homeassistant.helpers import device_registry as dr
 
 from .const import (
     DEVICE_TYPE_CONTACT_SPLITTER,
+    DEVICE_TYPE_EBUS,
     DEVICE_TYPE_NAMES,
+    DEVICE_TYPE_NAVIEN,
+    DEVICE_TYPE_OPENTHERM_V2,
     DEVICE_TYPE_RELAY_BLOCK_2CH,
     DEVICE_TYPE_RELAY_BLOCK_10CH,
     DOMAIN,
@@ -101,6 +104,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
             DEVICE_TYPE_NAMES.get(device_type_key, DEVICE_TYPE_NAMES.get(device_type, "Unknown")),
         )
 
+        # Determine if this device type has boiler-side communication.
+        # Relay blocks, contact sensors, and temp-only sensors don't —
+        # boiler_comm_ok stays permanently True for those.
+        _BOILER_DEVICE_TYPES = {DEVICE_TYPE_OPENTHERM_V2, DEVICE_TYPE_EBUS, DEVICE_TYPE_NAVIEN}
+        master_coordinator.has_boiler_comm = device_type in _BOILER_DEVICE_TYPES
+
         # Get register configuration for this device type
         device_def = DEVICE_TYPE_DEFS.get(device_type_key)
         _LOGGER.debug(
@@ -141,6 +150,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
             master=master_coordinator,
             registers=registers,
             scan_interval=scan_interval,
+            has_boiler_comm=master_coordinator.has_boiler_comm,
         )
 
         # Fetch initial data

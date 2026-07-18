@@ -27,6 +27,7 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
         master: ModbusMasterCoordinator,
         registers,
         scan_interval=REG_DEFAULT_SCAN_INTERVAL,
+        has_boiler_comm: bool = False,
     ):
         """Initialize the coordinator.
 
@@ -36,12 +37,15 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
             master: Master coordinator for Modbus operations.
             registers: List of (address, config) tuples to poll.
             scan_interval: Polling interval in seconds.
+            has_boiler_comm: True for OpenTherm/eBus/Navien (uses BOILER_COMM_BIT
+                on register 0x0010). False for relay / contact / sensor devices.
         """
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=scan_interval))
         self.hass = hass
         self.config_entry = config_entry
         self._config = config_entry.options or config_entry.data
         self._master = master
+        self._has_boiler_comm = has_boiler_comm
 
         # Store registers as list of (address, config) tuples to preserve device-specific config
         # Important: Different device types may use same register address with different settings
@@ -90,12 +94,14 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
                 else:
                     data[register] = result.registers
 
-                    # Detect boiler communication status from register 0x0010 bit 3
-                    if register == 0x0010 and result.registers:
+                    # Detect boiler communication status from register 0x0010 bit 3.
+                    # Only meaningful for OpenTherm / eBus / Navien device types.
+                    if self._has_boiler_comm and register == 0x0010 and result.registers:
                         lsb = result.registers[0] & 0xFF
                         comm_ok = bool(lsb & BOILER_COMM_BIT)
                         if comm_ok != self._boiler_comm_ok:
                             self._boiler_comm_ok = comm_ok
+                            self._master.boiler_comm_ok = comm_ok
                             _LOGGER.info(
                                 "Boiler communication %s (0x0010 LSB=0x%02X)",
                                 "restored" if comm_ok else "lost",

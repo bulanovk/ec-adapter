@@ -59,6 +59,13 @@ class ModbusButton(ModbusUniqIdMixin, ButtonEntity):
         # Device info
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
+    @property
+    def available(self) -> bool:
+        """Return True if the boiler is reachable."""
+        if not super().available:
+            return False
+        return self.coordinator.boiler_comm_ok
+
     async def async_press(self) -> None:
         """Press the button."""
         wrval = self.button_config.get("value")
