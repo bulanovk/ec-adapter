@@ -2,6 +2,9 @@
 
 Design follows the HA Modbus integration's approach:
 - ``asyncio.Lock`` serialises operations (no background queue task).
+- ``msg_wait`` delay (30 ms for serial, 0 for TCP/UDP) placed **after** the
+  pymodbus call inside the lock — acts as an RS-485 inter-frame pause that
+  prevents back-to-back bursts confusing some devices.
 - No ``ensure_connected()`` before every operation — pymodbus's built-in
   ``TransactionManager.execute()`` tries to reconnect if ``transport`` is None.
 - Background reconnect is handled by pymodbus (``reconnect_delay`` on
@@ -15,11 +18,18 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient, AsyncModbusUdpClient
 
+from .const import MODBUS_TYPE_SERIAL, OPT_MODBUS_TYPE
 from .helpers import create_modbus_client
 
 _LOGGER = logging.getLogger(__name__)
 
 POOL_KEY = "pool"
+
+# Inter-operation delay (seconds).
+# HA Modbus places this *after* the pymodbus call, inside the lock —
+# it acts as an inter-frame pause on RS-485, not merely serialisation.
+_SERIAL_MSG_WAIT = 0.030
+_TCP_MSG_WAIT = 0.0
 
 # Type alias for Modbus async clients
 ModbusAsyncClient = Union[AsyncModbusTcpClient, AsyncModbusUdpClient, AsyncModbusSerialClient]
@@ -70,6 +80,8 @@ class PooledClient:
         self._client: Optional[ModbusAsyncClient] = None
         self._ref_count = 0
         self._lock = asyncio.Lock()
+        modbus_type = config.get(OPT_MODBUS_TYPE, "")
+        self._msg_wait = _SERIAL_MSG_WAIT if modbus_type == MODBUS_TYPE_SERIAL else _TCP_MSG_WAIT
 
     # -- reference counting ---------------------------------------------------
 
@@ -176,13 +188,16 @@ class PooledClient:
     async def submit_operation(self, op: str, data: Dict[str, Any]) -> Any:
         """Execute a Modbus operation under the shared lock.
 
-        Follows HA Modbus ``async_pb_call``: acquire lock → (optional wait)
-        → call pymodbus directly.  No explicit ``ensure_connected`` —
-        pymodbus's ``TransactionManager.execute()`` handles reconnection
+        Follows HA Modbus ``async_pb_call``: acquire lock → call pymodbus
+        → optional inter-frame delay (RS-485).  No explicit ``ensure_connected``
+        — pymodbus's ``TransactionManager.execute()`` handles reconnection
         internally when ``transport`` is None.
         """
         async with self._lock:
-            return await self._execute_client_operation(op, data)
+            result = await self._execute_client_operation(op, data)
+            if self._msg_wait:
+                await asyncio.sleep(self._msg_wait)
+            return result
 
     async def _execute_client_operation(self, op: str, data: Dict[str, Any]) -> Any:
         """Dispatch to the underlying pymodbus client."""

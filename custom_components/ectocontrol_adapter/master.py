@@ -46,6 +46,10 @@ class ModbusMasterCoordinator:
         self._slave_id = int(self._config[OPT_SLAVE])
         # Per-register locks to serialize read-modify-write operations
         self._register_locks: Dict[int, asyncio.Lock] = {}
+        # Boiler communication status (updated by data coordinator for boiler devices)
+        self._boiler_comm_ok: bool = True
+        # Set by setup after device type detection; False for relay / contact / sensor devices
+        self.has_boiler_comm: bool = False
 
     async def detect_device_type(self) -> Optional[dict]:
         """Detect device type by reading generic device info registers.
@@ -192,3 +196,17 @@ class ModbusMasterCoordinator:
     def is_connected(self) -> bool:
         """Check if the pooled client is connected."""
         return self._pooled_client.is_connected
+
+    @property
+    def boiler_comm_ok(self) -> bool:
+        """Return True when the adapter reports communication with the boiler.
+
+        Only meaningful for OpenTherm / eBus / Navien device types; relay
+        modules and contact sensors always return True.
+        """
+        return self._boiler_comm_ok
+
+    @boiler_comm_ok.setter
+    def boiler_comm_ok(self, value: bool) -> None:
+        """Update boiler communication status (called by data coordinator)."""
+        self._boiler_comm_ok = value

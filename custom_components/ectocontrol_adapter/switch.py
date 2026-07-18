@@ -103,6 +103,13 @@ class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
         # Device info
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
 
+    @property
+    def available(self) -> bool:
+        """Return True if the boiler is reachable."""
+        if not super().available:
+            return False
+        return self.coordinator.boiler_comm_ok
+
     async def async_added_to_hass(self):
         """Restore state from HA persistence."""
         await super().async_added_to_hass()
@@ -203,6 +210,13 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
         self._pending_restore_state: Optional[bool] = None
 
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self._master_coordinator.config_entry.entry_id)})
+
+    @property
+    def available(self) -> bool:
+        """Return True if the device is reachable (always True for relay modules)."""
+        if not super().available:
+            return False
+        return self.coordinator.boiler_comm_ok
 
     async def async_added_to_hass(self):
         """Restore state from persistence and queue for batch restoration."""
