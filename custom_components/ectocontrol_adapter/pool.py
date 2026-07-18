@@ -1,12 +1,23 @@
-"""Modbus client connection pool for sharing connections across config entries."""
+"""Modbus client connection pool for sharing connections across config entries.
+
+Design follows the HA Modbus integration's approach:
+- ``asyncio.Lock`` serialises operations (no background queue task).
+- No ``ensure_connected()`` before every operation — pymodbus's built-in
+  ``TransactionManager.execute()`` tries to reconnect if ``transport`` is None.
+- Background reconnect is handled by pymodbus (``reconnect_delay`` on
+  ``CommParams``) — the pool never forces a synchronous reconnect.
+- ``msg_wait`` (30 ms for serial, 0 for TCP/UDP) between operations
+  prevents back-to-back bursts that confuse some RS-485 devices.
+"""
 
 import asyncio
 import logging
+import time
 from typing import Any, Dict, Optional, Tuple, Union
 
 from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient, AsyncModbusUdpClient
 
-from .const import QUEUE_TIMEOUT
+from .const import MODBUS_TYPE_SERIAL, OPT_MODBUS_TYPE
 from .helpers import create_modbus_client
 
 _LOGGER = logging.getLogger(__name__)
@@ -15,6 +26,10 @@ POOL_KEY = "pool"
 
 # Type alias for Modbus async clients
 ModbusAsyncClient = Union[AsyncModbusTcpClient, AsyncModbusUdpClient, AsyncModbusSerialClient]
+
+# Inter-operation wait (seconds), prevents burst collisions on RS-485.
+_SERIAL_MSG_WAIT = 0.030
+_TCP_MSG_WAIT = 0.0
 
 
 def _get_pool_key(config: Dict[str, Any]) -> str:
@@ -44,7 +59,13 @@ def _get_pool_key(config: Dict[str, Any]) -> str:
 
 
 class PooledClient:
-    """A pooled Modbus client with reference counting and operation queue."""
+    """A pooled Modbus client with reference counting and serialised access.
+
+    Follows the HA Modbus ``ModbusHub`` pattern: a single ``asyncio.Lock``
+    gates all operations so that only one Modbus transaction is in-flight at
+    any time.  There is **no** background queue-processing task — callers
+    await the lock directly in ``submit_operation``.
+    """
 
     def __init__(self, config: Dict[str, Any]) -> None:
         """Initialize the pooled client.
@@ -55,55 +76,103 @@ class PooledClient:
         self._config = config
         self._client: Optional[ModbusAsyncClient] = None
         self._ref_count = 0
-        self._queue: asyncio.Queue[Tuple[str, str, Dict[str, Any], asyncio.Future[Any]]] = asyncio.Queue()
-        self._processing_task: Optional[asyncio.Task[None]] = None
-        self._is_running = False
-        self._operation_lock = asyncio.Lock()
-        self._current_operation: Optional[str] = None
+        self._lock = asyncio.Lock()
+
+        modbus_type = config.get(OPT_MODBUS_TYPE, "")
+        self._msg_wait = _SERIAL_MSG_WAIT if modbus_type == MODBUS_TYPE_SERIAL else _TCP_MSG_WAIT
+
+    # -- reference counting ---------------------------------------------------
 
     async def acquire(self) -> bool:
-        """Acquire a reference to this client. Starts processing if first ref."""
+        """Acquire a reference.  Connects on first reference."""
         self._ref_count += 1
         _LOGGER.debug("PooledClient acquired, ref_count=%d", self._ref_count)
 
         if self._ref_count == 1:
-            # First reference - start processing and connect
-            self._is_running = True
-            self._processing_task = asyncio.create_task(self._process_queue())
             await self._connect()
 
         return self._client is not None and self._client.connected
 
     async def release(self):
-        """Release a reference. Stops processing and disconnects if last ref."""
+        """Release a reference.  Disconnects on last reference."""
         if self._ref_count > 0:
             self._ref_count -= 1
             _LOGGER.debug("PooledClient released, ref_count=%d", self._ref_count)
 
         if self._ref_count == 0:
-            # Last reference - stop processing and disconnect
-            self._is_running = False
-            if self._processing_task:
-                self._processing_task.cancel()
-                try:
-                    await self._processing_task
-                except asyncio.CancelledError:
-                    pass
-                self._processing_task = None
-
             if self._client:
                 self._client.close()
                 self._client = None
             _LOGGER.debug("PooledClient stopped (no more references)")
 
+    # -- connection -----------------------------------------------------------
+
+    def _install_diag_hooks(self) -> None:
+        """Monkey-patch TransactionManager with sub-millisecond timing diag."""
+        if self._client is None:
+            return
+        ctx = self._client.ctx  # TransactionManager
+        _orig_execute = ctx.execute
+        _orig_callback_data = ctx.callback_data
+        _orig_send = ctx.send
+        _orig_connect = ctx.connect
+
+        async def _diag_execute(no_response_expected, request):
+            t_entry = time.monotonic()
+            try:
+                return await _orig_execute(no_response_expected, request)
+            finally:
+                elapsed = time.monotonic() - t_entry
+                _LOGGER.info(
+                    "⏱️ PYLIB.execute dev=%s fc=%s tid=%s → %.3fs",
+                    request.dev_id,
+                    request.function_code,
+                    request.transaction_id,
+                    elapsed,
+                )
+
+        def _diag_callback_data(data, addr=None):
+            t0 = time.monotonic()
+            cut = _orig_callback_data(data, addr)
+            elapsed = time.monotonic() - t0
+            pdu = ctx.last_pdu
+            _LOGGER.info(
+                "⏱️ PYLIB.callback_data len=%d cut=%d pdu=%s → %.3fs",
+                len(data),
+                cut,
+                pdu.__class__.__name__ if pdu else "None",
+                elapsed,
+            )
+            return cut
+
+        def _diag_send(data, addr=None):
+            t0 = time.monotonic()
+            result = _orig_send(data, addr)
+            elapsed = time.monotonic() - t0
+            _LOGGER.info("⏱️ PYLIB.send len=%d → %.3fs", len(data), elapsed)
+            return result
+
+        async def _diag_connect():
+            t0 = time.monotonic()
+            result = await _orig_connect()
+            elapsed = time.monotonic() - t0
+            _LOGGER.info("⏱️ PYLIB.connect → %.3fs (success=%s)", elapsed, result)
+            return result
+
+        ctx.execute = _diag_execute  # type: ignore[method-assign]
+        ctx.callback_data = _diag_callback_data  # type: ignore[method-assign]
+        ctx.send = _diag_send  # type: ignore[method-assign]
+        ctx.connect = _diag_connect  # type: ignore[method-assign]
+
     async def _connect(self):
-        """Connect to Modbus device."""
+        """Create client and connect (one-shot, no retry loop)."""
         if self._client:
             self._client.close()
             self._client = None
 
         try:
             self._client = create_modbus_client(self._config)
+            self._install_diag_hooks()
             result = await self._client.connect()
             if not result:
                 _LOGGER.error("Failed to connect to Modbus device")
@@ -112,80 +181,56 @@ class PooledClient:
         except Exception as e:
             _LOGGER.error("Error connecting to Modbus: %s", e)
 
-    async def ensure_connected(self) -> bool:
-        """Ensure client is connected, reconnecting if necessary."""
-        if self._client and self._client.connected:
-            return True
-
-        await self._connect()
-        return self._client is not None and self._client.connected
-
-    async def _process_queue(self):
-        """Process queued Modbus commands."""
-        while self._is_running:
-            try:
-                operation_id, operation_type, operation_data, future = await asyncio.wait_for(
-                    self._queue.get(), timeout=QUEUE_TIMEOUT
-                )
-
-                async with self._operation_lock:
-                    self._current_operation = operation_id
-                    try:
-                        result = await self._execute_operation(operation_type, operation_data)
-                        if not future.done():
-                            future.set_result(result)
-                    except Exception as e:
-                        if not future.done():
-                            future.set_exception(e)
-                        _LOGGER.error("Operation %s failed: %s", operation_id, e)
-                    finally:
-                        self._current_operation = None
-                        self._queue.task_done()
-
-            except asyncio.TimeoutError:
-                continue
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                _LOGGER.error("Unexpected error in queue processing: %s", e)
-
-    async def _execute_operation(self, op: str, data: Dict[str, Any]) -> Any:
-        """Execute a Modbus operation."""
-        if not await self.ensure_connected():
-            raise Exception("Modbus device not connected")
-
-        return await self._execute_client_operation(op, data)
-
-    async def _execute_client_operation(self, op: str, data: Dict[str, Any]) -> Any:
-        """Execute operation on the client."""
-        if self._client is None:
-            raise Exception("Modbus client not initialized")
-
-        if op == "read_holding_registers":
-            return await self._client.read_holding_registers(
-                address=data["address"], count=data["count"], device_id=data["device_id"]
-            )
-        elif op == "read_input_registers":
-            return await self._client.read_input_registers(
-                address=data["address"], count=data["count"], device_id=data["device_id"]
-            )
-        elif op == "write_registers":
-            return await self._client.write_registers(
-                address=data["address"], values=data["values"], device_id=data["device_id"]
-            )
-        else:
-            raise ValueError(f"Unknown operation type: {op}")
+    # -- operations -----------------------------------------------------------
 
     async def submit_operation(self, op: str, data: Dict[str, Any]) -> Any:
-        """Submit an operation to the queue and wait for result."""
-        if not self._is_running:
-            raise RuntimeError("PooledClient is not running")
+        """Execute a Modbus operation under the shared lock.
 
-        operation_id = f"{op}_{id(data)}"
-        future: asyncio.Future[Any] = asyncio.Future()
+        Follows HA Modbus ``async_pb_call``: acquire lock → (optional wait)
+        → call pymodbus directly.  No explicit ``ensure_connected`` —
+        pymodbus's ``TransactionManager.execute()`` handles reconnection
+        internally when ``transport`` is None.
+        """
+        async with self._lock:
+            if self._msg_wait:
+                await asyncio.sleep(self._msg_wait)
+            return await self._execute_client_operation(op, data)
 
-        await self._queue.put((operation_id, op, data, future))
-        return await future
+    async def _execute_client_operation(self, op: str, data: Dict[str, Any]) -> Any:
+        """Dispatch to the underlying pymodbus client."""
+        if self._client is None:
+            raise RuntimeError("Modbus client not initialized")
+
+        dev_id = data.get("device_id", "?")
+        addr = data.get("address", "?")
+        t0 = time.monotonic()
+
+        try:
+            if op == "read_holding_registers":
+                result = await self._client.read_holding_registers(
+                    address=data["address"], count=data["count"], device_id=data["device_id"]
+                )
+            elif op == "read_input_registers":
+                result = await self._client.read_input_registers(
+                    address=data["address"], count=data["count"], device_id=data["device_id"]
+                )
+            elif op == "write_registers":
+                result = await self._client.write_registers(
+                    address=data["address"], values=data["values"], device_id=data["device_id"]
+                )
+            else:
+                raise ValueError(f"Unknown operation type: {op}")
+        finally:
+            elapsed = time.monotonic() - t0
+            _LOGGER.info(
+                "⏱️ TIMING op=%s addr=0x%04X dev=%s → %.3fs",
+                op,
+                addr,
+                dev_id,
+                elapsed,
+            )
+
+        return result
 
     @property
     def ref_count(self) -> int:

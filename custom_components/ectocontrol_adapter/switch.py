@@ -236,6 +236,8 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
 
     async def async_turn_on(self, **kwargs):
         """Turn the switch on."""
+        if self._attr_is_on:
+            return
         success = await self._write_state_to_device(True)
         if success:
             self._attr_is_on = True
@@ -246,6 +248,8 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
 
     async def async_turn_off(self, **kwargs):
         """Turn the switch off."""
+        if not self._attr_is_on:
+            return
         success = await self._write_state_to_device(False)
         if success:
             self._attr_is_on = False
