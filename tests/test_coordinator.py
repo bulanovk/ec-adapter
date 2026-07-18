@@ -132,8 +132,9 @@ class TestModbusDataUpdateCoordinator:
         data = await coordinator._async_update_data()
 
         assert data is not None
-        # All registers should have None values
-        assert all(value is None for value in data.values())
+        # All register values should be None (ignore internal bookkeeping keys)
+        reg_values = {k: v for k, v in data.items() if isinstance(k, int)}
+        assert all(value is None for value in reg_values.values())
 
     @pytest.mark.asyncio
     async def test_async_update_data_exception(self, coordinator, mock_modbus_client):

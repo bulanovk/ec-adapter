@@ -9,9 +9,12 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import DOMAIN
 from .master import ModbusMasterCoordinator
-from .registers import REG_DEFAULT_SCAN_INTERVAL, REGISTERS_R
+from .registers import BOILER_COMM_BIT, REG_BOILER_DEPENDENT, REG_DEFAULT_SCAN_INTERVAL, REGISTERS_R
 
 _LOGGER = logging.getLogger(__name__)
+
+# Special key in coordinator data dict for boiler communication flag
+_BOILER_COMM_OK = "_boiler_comm_ok"
 
 
 class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
@@ -51,11 +54,19 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.error(error)
             raise ValueError(error)
 
+        # Default to True — first cycle reads all registers
+        self._boiler_comm_ok = True
+
     async def _async_update_data(self):
         data = {}
         t_cycle_start = time.monotonic()
         try:
             for register, reg_config in self._registers:
+                # Skip boiler-dependent registers when boiler comm is down
+                if not self._boiler_comm_ok and register in REG_BOILER_DEPENDENT:
+                    data[register] = None
+                    continue
+
                 input_type = reg_config.get("input_type", "holding")
                 t0 = time.monotonic()
 
@@ -78,6 +89,18 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
                     data[register] = None
                 else:
                     data[register] = result.registers
+
+                    # Detect boiler communication status from register 0x0010 bit 3
+                    if register == 0x0010 and result.registers:
+                        lsb = result.registers[0] & 0xFF
+                        comm_ok = bool(lsb & BOILER_COMM_BIT)
+                        if comm_ok != self._boiler_comm_ok:
+                            self._boiler_comm_ok = comm_ok
+                            _LOGGER.info(
+                                "Boiler communication %s (0x0010 LSB=0x%02X)",
+                                "restored" if comm_ok else "lost",
+                                lsb,
+                            )
         except Exception as e:
             raise UpdateFailed(f"Exception while Modbus read: {e}")
         finally:
@@ -86,4 +109,5 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
                 len(self._registers),
                 time.monotonic() - t_cycle_start,
             )
+        data[_BOILER_COMM_OK] = self._boiler_comm_ok
         return data

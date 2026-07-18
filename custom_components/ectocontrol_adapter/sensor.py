@@ -8,7 +8,9 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .mixins import ModbusSensorMixin, ModbusUniqIdMixin
-from .registers import BM_VALUE
+from .registers import BM_VALUE, REG_BOILER_DEPENDENT
+
+_BOILER_COMM_OK = "_boiler_comm_ok"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -135,3 +137,16 @@ class ModbusSensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, Sens
         """Return the icon for this sensor."""
         icon = self.bitmask_config.get("icon") or self.conv_config.get("icon") or self.register_config.get("icon")
         return icon
+
+    @property
+    def available(self) -> bool:
+        """Return True if entity is available.
+
+        Boiler-dependent sensors are marked unavailable when the adapter
+        reports no communication with the boiler (bit 3 of register 0x0010).
+        """
+        if not super().available:
+            return False
+        if self.register_addr in REG_BOILER_DEPENDENT and self.coordinator.data:
+            return bool(self.coordinator.data.get(_BOILER_COMM_OK, True))
+        return True
