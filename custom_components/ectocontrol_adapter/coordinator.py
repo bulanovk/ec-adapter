@@ -1,6 +1,7 @@
 """Data update coordinator for ectoControl adapter."""
 
 import logging
+import time
 from datetime import timedelta
 
 from homeassistant.core import HomeAssistant
@@ -52,15 +53,25 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         data = {}
+        t_cycle_start = time.monotonic()
         try:
             for register, reg_config in self._registers:
                 input_type = reg_config.get("input_type", "holding")
+                t0 = time.monotonic()
 
                 # Choose read method based on input_type
                 if input_type == "input":
                     result = await self._master.read_input_registers(address=register, count=reg_config["count"])
                 else:
                     result = await self._master.read_holding_registers(address=register, count=reg_config["count"])
+
+                elapsed = time.monotonic() - t0
+                _LOGGER.info(
+                    "⏱️ COORD_SCAN reg=0x%04X type=%s → %.3fs",
+                    register,
+                    input_type,
+                    elapsed,
+                )
 
                 if result is None or result.isError():
                     _LOGGER.error("Modbus read error for register 0x%04X", register)
@@ -69,4 +80,10 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
                     data[register] = result.registers
         except Exception as e:
             raise UpdateFailed(f"Exception while Modbus read: {e}")
+        finally:
+            _LOGGER.info(
+                "⏱️ COORD_CYCLE total=%d regs → %.3fs",
+                len(self._registers),
+                time.monotonic() - t_cycle_start,
+            )
         return data

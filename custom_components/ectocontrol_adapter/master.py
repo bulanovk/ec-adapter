@@ -16,14 +16,6 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
-# Generic device-info registers (0x0000-0x0003). Used as a one-shot warmup
-# read to wake up devices whose first transaction after an idle period takes
-# ~5 seconds. These registers exist on every ectoControl device type (boiler
-# adapters 0x14/0x15/0x16, contact splitter 0x59, relay blocks 0xC0/0xC1),
-# so the warmup is device-agnostic.
-WARMUP_ADDRESS = 0x0000
-WARMUP_COUNT = 4
-
 
 class ModbusMasterCoordinator:
     """Coordinator for Modbus operations using a shared connection pool."""
@@ -54,38 +46,6 @@ class ModbusMasterCoordinator:
         self._slave_id = int(self._config[OPT_SLAVE])
         # Per-register locks to serialize read-modify-write operations
         self._register_locks: Dict[int, asyncio.Lock] = {}
-        # One-shot warmup task — absorbs the relay block's ~5s first-response
-        # latency (see _do_warmup) so subsequent ops run in ~20 ms.
-        self._warmup_task: Optional[asyncio.Task] = None
-
-    async def _do_warmup(self) -> None:
-        """Perform a sacrificial warmup read of the generic device-info registers.
-
-        pymodbus 3.13.1 enforces a strict response_timeout. The ectoControl
-        Relay Block 10ch (device 0xC1) takes ~5 seconds to respond to its
-        first Modbus transaction after a long idle period — just longer than
-        the configured 5 s timeout. Without warmup, every first op of every
-        coordinator cycle burns the full 5 s waiting for the device. This
-        sacrificial read pays that cost once so subsequent ops are fast.
-
-        Registers 0x0000-0x0003 hold generic device info (UID, type, channel
-        count) on every ectoControl device type, so the warmup is
-        device-agnostic. The data is discarded — only the wake-up side
-        effect matters.
-        """
-        try:
-            await self._pooled_client.submit_operation(
-                "read_holding_registers",
-                {"address": WARMUP_ADDRESS, "count": WARMUP_COUNT, "device_id": self._slave_id},
-            )
-        except Exception:  # noqa: BLE001 - warmup is best-effort
-            _LOGGER.debug("Warmup read failed; real ops will surface the error")
-
-    async def _ensure_warmup(self) -> None:
-        """Schedule the warmup on first call and await its completion."""
-        if self._warmup_task is None:
-            self._warmup_task = asyncio.create_task(self._do_warmup())
-        await self._warmup_task
 
     async def detect_device_type(self) -> Optional[dict]:
         """Detect device type by reading generic device info registers.
@@ -94,7 +54,6 @@ class ModbusMasterCoordinator:
             dict with keys: 'device_type', 'device_uid', 'channel_count'
             or None if detection fails
         """
-        await self._ensure_warmup()
         # Read registers 0x0000-0x0003 (generic device info)
         result = await self._pooled_client.submit_operation(
             "read_holding_registers", {"address": 0x0000, "count": 4, "device_id": self._slave_id}
@@ -167,14 +126,14 @@ class ModbusMasterCoordinator:
 
     async def read_holding_registers(self, address: int, count: int) -> Any:
         """Read holding registers from the device."""
-        await self._ensure_warmup()
+
         return await self._pooled_client.submit_operation(
             "read_holding_registers", {"address": address, "count": count, "device_id": self._slave_id}
         )
 
     async def read_input_registers(self, address: int, count: int) -> Any:
         """Read input registers from the device (function code 0x04)."""
-        await self._ensure_warmup()
+
         return await self._pooled_client.submit_operation(
             "read_input_registers", {"address": address, "count": count, "device_id": self._slave_id}
         )
@@ -183,7 +142,7 @@ class ModbusMasterCoordinator:
         self, address: int, values: List[int], status_register: Optional[int] = None, skip_verify: bool = False
     ) -> bool:
         """Write registers to the device with optional status verification."""
-        await self._ensure_warmup()
+
         result = await self._pooled_client.submit_operation(
             "write_registers", {"address": address, "values": values, "device_id": self._slave_id}
         )
