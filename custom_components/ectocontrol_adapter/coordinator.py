@@ -66,7 +66,7 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
                     result = await self._master.read_holding_registers(address=register, count=reg_config["count"])
 
                 elapsed = time.monotonic() - t0
-                _LOGGER.info(
+                _LOGGER.debug(
                     "⏱️ COORD_SCAN reg=0x%04X type=%s → %.3fs",
                     register,
                     input_type,
@@ -81,7 +81,7 @@ class ModbusDataUpdateCoordinator(DataUpdateCoordinator):
         except Exception as e:
             raise UpdateFailed(f"Exception while Modbus read: {e}")
         finally:
-            _LOGGER.info(
+            _LOGGER.debug(
                 "⏱️ COORD_CYCLE total=%d regs → %.3fs",
                 len(self._registers),
                 time.monotonic() - t_cycle_start,

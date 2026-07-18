@@ -123,7 +123,7 @@ class PooledClient:
                 return await _orig_execute(no_response_expected, request)
             finally:
                 elapsed = time.monotonic() - t_entry
-                _LOGGER.info(
+                _LOGGER.debug(
                     "⏱️ PYLIB.execute dev=%s fc=%s tid=%s → %.3fs",
                     request.dev_id,
                     request.function_code,
@@ -136,7 +136,7 @@ class PooledClient:
             cut = _orig_callback_data(data, addr)
             elapsed = time.monotonic() - t0
             pdu = ctx.last_pdu
-            _LOGGER.info(
+            _LOGGER.debug(
                 "⏱️ PYLIB.callback_data len=%d cut=%d pdu=%s → %.3fs",
                 len(data),
                 cut,
@@ -149,14 +149,14 @@ class PooledClient:
             t0 = time.monotonic()
             result = _orig_send(data, addr)
             elapsed = time.monotonic() - t0
-            _LOGGER.info("⏱️ PYLIB.send len=%d → %.3fs", len(data), elapsed)
+            _LOGGER.debug("⏱️ PYLIB.send len=%d → %.3fs", len(data), elapsed)
             return result
 
         async def _diag_connect():
             t0 = time.monotonic()
             result = await _orig_connect()
             elapsed = time.monotonic() - t0
-            _LOGGER.info("⏱️ PYLIB.connect → %.3fs (success=%s)", elapsed, result)
+            _LOGGER.debug("⏱️ PYLIB.connect → %.3fs (success=%s)", elapsed, result)
             return result
 
         ctx.execute = _diag_execute  # type: ignore[method-assign]
@@ -222,7 +222,7 @@ class PooledClient:
                 raise ValueError(f"Unknown operation type: {op}")
         finally:
             elapsed = time.monotonic() - t0
-            _LOGGER.info(
+            _LOGGER.debug(
                 "⏱️ TIMING op=%s addr=0x%04X dev=%s → %.3fs",
                 op,
                 addr,
