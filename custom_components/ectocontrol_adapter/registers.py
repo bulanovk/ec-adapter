@@ -450,6 +450,32 @@ REGISTERS_INPUT = REGISTERS_INPUT_8CH  # Default to 8-channel
 REGISTERS_R.update(REGISTERS_INPUT_8CH)
 REGISTERS_R.update(REGISTERS_INPUT_10CH)
 
+# Boiler communication status bit in register 0x0010
+# Bit 3 of LSB: 0 = no response from boiler, 1 = boiler communication OK
+BOILER_COMM_BIT = 0x08
+
+# Boiler-dependent registers (all return 0/marker when bit 3 of 0x0010 is 0)
+REG_BOILER_DEPENDENT: frozenset[int] = frozenset(
+    {
+        0x0014,
+        0x0015,
+        0x0016,
+        0x0017,  # min/max temp limits
+        0x0018,
+        0x0019,
+        0x001A,
+        0x001B,  # coolant/dhw/pressure/flow
+        0x001C,
+        0x001D,
+        0x001E,
+        0x001F,  # burner/errors
+        0x0020,
+        0x0021,
+        0x0022,
+        0x0023,  # outdoor/vendor/model/OT errors
+    }
+)
+
 # Relay Module Read Register (Device Types 0xC0, 0xC1)
 # Register 0x0010 is RW - coordinator polls it so switches can read their state
 REGISTERS_RELAY_R = {

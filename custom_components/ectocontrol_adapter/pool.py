@@ -6,8 +6,6 @@ Design follows the HA Modbus integration's approach:
   ``TransactionManager.execute()`` tries to reconnect if ``transport`` is None.
 - Background reconnect is handled by pymodbus (``reconnect_delay`` on
   ``CommParams``) — the pool never forces a synchronous reconnect.
-- ``msg_wait`` (30 ms for serial, 0 for TCP/UDP) between operations
-  prevents back-to-back bursts that confuse some RS-485 devices.
 """
 
 import asyncio
@@ -17,7 +15,6 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient, AsyncModbusUdpClient
 
-from .const import MODBUS_TYPE_SERIAL, OPT_MODBUS_TYPE
 from .helpers import create_modbus_client
 
 _LOGGER = logging.getLogger(__name__)
@@ -26,10 +23,6 @@ POOL_KEY = "pool"
 
 # Type alias for Modbus async clients
 ModbusAsyncClient = Union[AsyncModbusTcpClient, AsyncModbusUdpClient, AsyncModbusSerialClient]
-
-# Inter-operation wait (seconds), prevents burst collisions on RS-485.
-_SERIAL_MSG_WAIT = 0.030
-_TCP_MSG_WAIT = 0.0
 
 
 def _get_pool_key(config: Dict[str, Any]) -> str:
@@ -78,9 +71,6 @@ class PooledClient:
         self._ref_count = 0
         self._lock = asyncio.Lock()
 
-        modbus_type = config.get(OPT_MODBUS_TYPE, "")
-        self._msg_wait = _SERIAL_MSG_WAIT if modbus_type == MODBUS_TYPE_SERIAL else _TCP_MSG_WAIT
-
     # -- reference counting ---------------------------------------------------
 
     async def acquire(self) -> bool:
@@ -123,7 +113,7 @@ class PooledClient:
                 return await _orig_execute(no_response_expected, request)
             finally:
                 elapsed = time.monotonic() - t_entry
-                _LOGGER.info(
+                _LOGGER.debug(
                     "⏱️ PYLIB.execute dev=%s fc=%s tid=%s → %.3fs",
                     request.dev_id,
                     request.function_code,
@@ -136,7 +126,7 @@ class PooledClient:
             cut = _orig_callback_data(data, addr)
             elapsed = time.monotonic() - t0
             pdu = ctx.last_pdu
-            _LOGGER.info(
+            _LOGGER.debug(
                 "⏱️ PYLIB.callback_data len=%d cut=%d pdu=%s → %.3fs",
                 len(data),
                 cut,
@@ -149,14 +139,14 @@ class PooledClient:
             t0 = time.monotonic()
             result = _orig_send(data, addr)
             elapsed = time.monotonic() - t0
-            _LOGGER.info("⏱️ PYLIB.send len=%d → %.3fs", len(data), elapsed)
+            _LOGGER.debug("⏱️ PYLIB.send len=%d → %.3fs", len(data), elapsed)
             return result
 
         async def _diag_connect():
             t0 = time.monotonic()
             result = await _orig_connect()
             elapsed = time.monotonic() - t0
-            _LOGGER.info("⏱️ PYLIB.connect → %.3fs (success=%s)", elapsed, result)
+            _LOGGER.debug("⏱️ PYLIB.connect → %.3fs (success=%s)", elapsed, result)
             return result
 
         ctx.execute = _diag_execute  # type: ignore[method-assign]
@@ -192,8 +182,6 @@ class PooledClient:
         internally when ``transport`` is None.
         """
         async with self._lock:
-            if self._msg_wait:
-                await asyncio.sleep(self._msg_wait)
             return await self._execute_client_operation(op, data)
 
     async def _execute_client_operation(self, op: str, data: Dict[str, Any]) -> Any:
@@ -222,7 +210,7 @@ class PooledClient:
                 raise ValueError(f"Unknown operation type: {op}")
         finally:
             elapsed = time.monotonic() - t0
-            _LOGGER.info(
+            _LOGGER.debug(
                 "⏱️ TIMING op=%s addr=0x%04X dev=%s → %.3fs",
                 op,
                 addr,
