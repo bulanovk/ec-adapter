@@ -27,18 +27,18 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         registers = register_groups[scan_interval]
 
         for register, config in registers:
-            sensor = ModbusSensor(coordinator, register, config)
+            sensor = ModbusSensor(hass, coordinator, register, config)
             sensors.append(sensor)
 
             if "bitmasks" in config:
                 for mask, mask_config in config["bitmasks"].items():
                     if mask_config["type"] == BM_VALUE:
-                        sensor = ModbusSensor(coordinator, register, config, mask)
+                        sensor = ModbusSensor(hass, coordinator, register, config, mask)
                         sensors.append(sensor)
 
             if "converters" in config:
                 for conv_name in config["converters"].keys():
-                    sensor = ModbusSensor(coordinator, register, config, bitmask=None, conv_name=conv_name)
+                    sensor = ModbusSensor(hass, coordinator, register, config, bitmask=None, conv_name=conv_name)
                     sensors.append(sensor)
 
     async_add_entities(sensors, True)
@@ -47,9 +47,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class ModbusSensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, SensorEntity):
     """Modbus Sensor."""
 
-    def __init__(self, coordinator, register_addr, register_config, bitmask=None, conv_name=None):
+    def __init__(self, hass, coordinator, register_addr, register_config, bitmask=None, conv_name=None):
         """Initialize the sensor."""
         super().__init__(coordinator)
+        self.hass = hass
         self.register_addr = register_addr
         self.register_config = register_config
 
@@ -95,7 +96,7 @@ class ModbusSensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, Sens
 
         # Device info (routes boiler-side registers to the Boiler sub-device)
         self._attr_device_info = get_device_info_for_register(
-            self.coordinator.config_entry, register_addr=self.register_addr
+            self.coordinator.config_entry, self.hass, register_addr=self.register_addr
         )
 
     @property

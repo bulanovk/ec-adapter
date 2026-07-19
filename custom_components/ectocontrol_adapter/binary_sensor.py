@@ -30,7 +30,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             if "bitmasks" in config:
                 for mask, mask_config in config["bitmasks"].items():
                     if mask_config["type"] in (BM_BINARY, BM_CONNECTIVITY):
-                        sensor = ModbusBinarySensor(coordinator, register, config, mask)
+                        sensor = ModbusBinarySensor(hass, coordinator, register, config, mask)
                         sensors.append(sensor)
 
     _LOGGER.debug(f"Adding {len(sensors)} binary sensors")
@@ -40,16 +40,18 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class ModbusBinarySensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, BinarySensorEntity):
     """Binary sensor for bitmask values."""
 
-    def __init__(self, coordinator, register_addr, register_config, bitmask):
+    def __init__(self, hass, coordinator, register_addr, register_config, bitmask):
         """Initialize the binary sensor.
 
         Args:
+            hass: Home Assistant instance.
             coordinator: Data update coordinator.
             register_addr: Modbus register address.
             register_config: Register configuration dictionary.
             bitmask: Bitmask value for this sensor.
         """
         super().__init__(coordinator)
+        self.hass = hass
         self.register_addr = register_addr
         self.register_config = register_config
         self.bitmask = bitmask
@@ -64,7 +66,7 @@ class ModbusBinarySensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity
 
         # Device info
         self._attr_device_info = get_device_info_for_register(
-            self.coordinator.config_entry, register_addr=self.register_addr
+            self.coordinator.config_entry, self.hass, register_addr=self.register_addr
         )
 
     @property
