@@ -3,11 +3,10 @@
 import logging
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .mixins import ModbusSensorMixin, ModbusUniqIdMixin
+from .mixins import ModbusSensorMixin, ModbusUniqIdMixin, get_device_info_for_register
 from .registers import BM_BINARY, BM_CONNECTIVITY, REG_BOILER_DEPENDENT
 
 _BOILER_COMM_OK = "_boiler_comm_ok"
@@ -64,7 +63,9 @@ class ModbusBinarySensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity
         self._attr_entity_category = self.bitmask_config.get("category")
 
         # Device info
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
+        self._attr_device_info = get_device_info_for_register(
+            self.coordinator.config_entry, register_addr=self.register_addr
+        )
 
     @property
     def is_on(self):

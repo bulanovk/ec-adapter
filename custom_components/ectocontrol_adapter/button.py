@@ -3,10 +3,9 @@
 import logging
 
 from homeassistant.components.button import ButtonEntity
-from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import DOMAIN
-from .mixins import ModbusUniqIdMixin
+from .mixins import ModbusUniqIdMixin, get_device_info_for_register
 from .registers import BUTTON_INPUT
 
 _LOGGER = logging.getLogger(__name__)
@@ -56,8 +55,10 @@ class ModbusButton(ModbusUniqIdMixin, ButtonEntity):
         self._attr_device_class = button_config.get("device_class") or register_config.get("device_class")
         self._attr_entity_category = button_config.get("category") or register_config.get("category")
 
-        # Device info
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
+        # Device info (routes boiler-side writes to the Boiler sub-device)
+        self._attr_device_info = get_device_info_for_register(
+            self.coordinator.config_entry, register_addr=self.register_addr, is_write=True
+        )
 
     @property
     def available(self) -> bool:

@@ -3,11 +3,10 @@
 import logging
 
 from homeassistant.components.select import SelectEntity
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import DOMAIN
-from .mixins import ModbusUniqIdMixin
+from .mixins import ModbusUniqIdMixin, get_device_info_for_register
 from .registers import SELECT_INPUT
 
 _LOGGER = logging.getLogger(__name__)
@@ -53,8 +52,10 @@ class ModbusSelect(ModbusUniqIdMixin, SelectEntity, RestoreEntity):
         self._attr_current_option = register_config.get("initial_value")
         self._attr_entity_category = register_config.get("category")
 
-        # Device info
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
+        # Device info (routes boiler-side writes to the Boiler sub-device)
+        self._attr_device_info = get_device_info_for_register(
+            self.coordinator.config_entry, register_addr=self.register_addr, is_write=True
+        )
 
     @property
     def available(self) -> bool:
