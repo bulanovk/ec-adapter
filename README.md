@@ -1,6 +1,4 @@
-# 🔥 Интеграция ectoControl для Home Assistant
-
-**Кастомный Modbus-компонент** для Home Assistant, работающий с устройствами **ectoControl**.
+# 🔥 Кастомный компонент для интеграции устройств ectoControl в Home Assistant через Modbus
 
 Интеграция предназначена для подключения устройств **ectoControl** по протоколу Modbus. Выбор конкретного устройства и набора сущностей происходит автоматически при настройке.
 
@@ -82,9 +80,7 @@ TCP, UDP, Serial (RS-232/RS-485), RTU-over-TCP — выбор на этапе н
 
 ---
 
-# 🔥 ectoControl integration for Home Assistant
-
-A **custom Modbus component** for Home Assistant that works with **ectoControl** devices.
+# 🔥 Custom component for integrating ectoControl devices into Home Assistant via Modbus
 
 This integration connects **ectoControl** devices over the Modbus protocol. The specific device and set of entities are detected automatically during setup.
 
