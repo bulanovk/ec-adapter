@@ -101,7 +101,7 @@ class ModbusSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
 
         # Device info (routes boiler-side writes to the Boiler sub-device)
         self._attr_device_info = get_device_info_for_register(
-            self.coordinator.config_entry, register_addr=self.register_addr, is_write=True
+            self.coordinator.config_entry, self.hass, register_addr=self.register_addr, is_write=True
         )
 
     @property
@@ -211,7 +211,7 @@ class ModbusBitmaskSwitch(ModbusUniqIdMixin, SwitchEntity, RestoreEntity):
         self._pending_restore_state: Optional[bool] = None
 
         self._attr_device_info = get_device_info_for_register(
-            self._master_coordinator.config_entry, register_addr=self.register_addr, is_write=True
+            self._master_coordinator.config_entry, self.hass, register_addr=self.register_addr, is_write=True
         )
 
     @property

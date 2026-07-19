@@ -23,7 +23,7 @@ def _unique_id_prefix(config: dict):
         return f"{DOMAIN}_{mb_type}_{host}_{port}_{slave}"
 
 
-def get_device_info_for_register(config_entry, register_addr=None, *, is_write=False) -> DeviceInfo:
+def get_device_info_for_register(config_entry, hass, register_addr=None, *, is_write=False) -> DeviceInfo:
     """Build DeviceInfo for an entity, routing boiler-side registers to the Boiler sub-device.
 
     For devices with boiler communication (OpenTherm, eBUS, Navien), a "Boiler"
@@ -36,7 +36,7 @@ def get_device_info_for_register(config_entry, register_addr=None, *, is_write=F
     are placed on the main device.
     """
     entry_id = config_entry.entry_id
-    entry_data = config_entry.hass.data.get(DOMAIN, {}).get(entry_id, {})
+    entry_data = hass.data.get(DOMAIN, {}).get(entry_id, {})
     has_boiler_sub_device = entry_data.get("boiler_device_id") is not None
 
     if has_boiler_sub_device and register_addr is not None:

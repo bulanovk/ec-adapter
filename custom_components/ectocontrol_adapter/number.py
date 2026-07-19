@@ -72,7 +72,7 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
 
         # Device info (routes boiler-side writes to the Boiler sub-device)
         self._attr_device_info = get_device_info_for_register(
-            self.coordinator.config_entry, register_addr=self.register_addr, is_write=True
+            self.coordinator.config_entry, self.hass, register_addr=self.register_addr, is_write=True
         )
 
     @property
