@@ -3,11 +3,10 @@
 import logging
 
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .mixins import ModbusSensorMixin, ModbusUniqIdMixin
+from .mixins import ModbusSensorMixin, ModbusUniqIdMixin, get_device_info_for_register
 from .registers import BM_VALUE, REG_BOILER_DEPENDENT
 
 _BOILER_COMM_OK = "_boiler_comm_ok"
@@ -94,8 +93,10 @@ class ModbusSensor(ModbusSensorMixin, ModbusUniqIdMixin, CoordinatorEntity, Sens
         # Initial state
         self._attr_native_value = None
 
-        # Device info
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
+        # Device info (routes boiler-side registers to the Boiler sub-device)
+        self._attr_device_info = get_device_info_for_register(
+            self.coordinator.config_entry, register_addr=self.register_addr
+        )
 
     @property
     def native_value(self):

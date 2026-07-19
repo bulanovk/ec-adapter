@@ -3,8 +3,10 @@
 import logging
 import struct
 
+from homeassistant.helpers.device_registry import DeviceInfo
+
 from .const import DOMAIN
-from .registers import BYTE_TYPES, REG_TYPE_MAPPING
+from .registers import BYTE_TYPES, REG_BOILER_DEPENDENT, REG_BOILER_WRITES, REG_TYPE_MAPPING
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,6 +21,33 @@ def _unique_id_prefix(config: dict):
         host = config.get("host")
         port = config.get("port")
         return f"{DOMAIN}_{mb_type}_{host}_{port}_{slave}"
+
+
+def get_device_info_for_register(config_entry, register_addr=None, *, is_write=False) -> DeviceInfo:
+    """Build DeviceInfo for an entity, routing boiler-side registers to the Boiler sub-device.
+
+    For devices with boiler communication (OpenTherm, eBUS, Navien), a "Boiler"
+    sub-device is created via ``async_get_or_create`` with ``via_device`` pointing
+    to the adapter. Boiler-side read registers (in ``REG_BOILER_DEPENDENT``) and
+    write registers (in ``REG_BOILER_WRITES``) are routed there; everything else
+    stays on the main adapter device.
+
+    For relay/contact-splitter device types (no boiler sub-device), all entities
+    are placed on the main device.
+    """
+    entry_id = config_entry.entry_id
+    entry_data = config_entry.hass.data.get(DOMAIN, {}).get(entry_id, {})
+    has_boiler_sub_device = entry_data.get("boiler_device_id") is not None
+
+    if has_boiler_sub_device and register_addr is not None:
+        boiler_set = REG_BOILER_WRITES if is_write else REG_BOILER_DEPENDENT
+        if register_addr in boiler_set:
+            return DeviceInfo(
+                identifiers={(DOMAIN, f"{entry_id}_boiler")},
+                via_device=(DOMAIN, entry_id),
+            )
+
+    return DeviceInfo(identifiers={(DOMAIN, entry_id)})
 
 
 class ModbusSensorMixin:

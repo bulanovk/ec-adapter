@@ -68,6 +68,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         manufacturer="ectoControl",
     )
 
+    # Boiler sub-device is created later, after device type detection (see below).
+
     # Acquire a pooled client connection
     pool: ModbusClientPool = hass.data[DOMAIN][POOL_KEY]
     pool_key, pooled_client = await pool.acquire(config)
@@ -109,6 +111,18 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         # boiler_comm_ok stays permanently True for those.
         _BOILER_DEVICE_TYPES = {DEVICE_TYPE_OPENTHERM_V2, DEVICE_TYPE_EBUS, DEVICE_TYPE_NAVIEN}
         master_coordinator.has_boiler_comm = device_type in _BOILER_DEVICE_TYPES
+
+        # Register Boiler sub-device (only for device types with boiler_comm).
+        # Boiler-side entities are routed here via get_device_info_for_register().
+        boiler_device = None
+        if master_coordinator.has_boiler_comm:
+            boiler_device = device_registry.async_get_or_create(
+                config_entry_id=config_entry.entry_id,
+                identifiers={(DOMAIN, f"{config_entry.entry_id}_boiler")},
+                name="Boiler",
+                manufacturer="ectoControl",
+                via_device=(DOMAIN, config_entry.entry_id),
+            )
 
         # Get register configuration for this device type
         device_def = DEVICE_TYPE_DEFS.get(device_type_key)
@@ -160,6 +174,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     hass.data[DOMAIN][config_entry.entry_id] = {
         "master_coordinator": master_coordinator,
         "device_id": device.id,
+        "boiler_device_id": boiler_device.id if boiler_device else None,
         "update_coordinators": update_coordinators,
         "update_register_groups": update_register_groups,
         "write_registers": write_regs,

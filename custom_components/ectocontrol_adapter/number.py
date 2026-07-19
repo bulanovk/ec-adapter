@@ -5,12 +5,11 @@ import logging
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.const import Platform
 from homeassistant.helpers import entity_registry
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.event import async_call_later, async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import DOMAIN
-from .mixins import ModbusUniqIdMixin
+from .mixins import ModbusUniqIdMixin, get_device_info_for_register
 from .registers import NUMBER_INPUT, REG_DEFAULT_NUMBER_STEP
 
 _LOGGER = logging.getLogger(__name__)
@@ -71,8 +70,10 @@ class ModbusNumber(ModbusUniqIdMixin, NumberEntity, RestoreEntity):
         ):
             self.write_after_connected = self.register_config["write_after_connected"]
 
-        # Device info
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)})
+        # Device info (routes boiler-side writes to the Boiler sub-device)
+        self._attr_device_info = get_device_info_for_register(
+            self.coordinator.config_entry, register_addr=self.register_addr, is_write=True
+        )
 
     @property
     def available(self) -> bool:
