@@ -127,9 +127,15 @@ REGISTERS_R = {
                 "name": "adapter_bus",
                 "device_class": SensorDeviceClass.ENUM,
                 "choices": {0b00000000000: "Opentherm", 0b00100000000: "eBus", 0b01000000000: "Navien"},
+                "category": EntityCategory.DIAGNOSTIC,
                 "icon": "mdi:alphabetical-variant",
             },
-            0x0800: {"type": BM_BINARY, "name": "connectivity", "device_class": BinarySensorDeviceClass.CONNECTIVITY},
+            0x0800: {
+                "type": BM_BINARY,
+                "name": "connectivity",
+                "device_class": BinarySensorDeviceClass.CONNECTIVITY,
+                "category": EntityCategory.DIAGNOSTIC,
+            },
         },
     },
     REG_R_ADAPTER_VERSION: {
@@ -169,6 +175,7 @@ REGISTERS_R = {
                 "converter": uptime_to_boottime,
                 "name": "adapter_boot_time",
                 "device_class": SensorDeviceClass.TIMESTAMP,
+                "category": EntityCategory.DIAGNOSTIC,
             }
         },
     },
@@ -180,7 +187,7 @@ REGISTERS_R = {
         "scan_interval": 60,
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "device_class": SensorDeviceClass.TEMPERATURE,
-        "category": EntityCategory.DIAGNOSTIC,
+        "category": EntityCategory.CONFIG,
     },
     REG_R_COOLANT_MAX_TEMP: {
         "name": "coolant_max_temp",
@@ -190,7 +197,7 @@ REGISTERS_R = {
         "scan_interval": 60,
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "device_class": SensorDeviceClass.TEMPERATURE,
-        "category": EntityCategory.DIAGNOSTIC,
+        "category": EntityCategory.CONFIG,
     },
     REG_R_DHW_MIN_TEMP: {
         "name": "dhw_min_temp",
@@ -200,7 +207,7 @@ REGISTERS_R = {
         "scan_interval": 60,
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "device_class": SensorDeviceClass.TEMPERATURE,
-        "category": EntityCategory.DIAGNOSTIC,
+        "category": EntityCategory.CONFIG,
     },
     REG_R_DHW_MAX_TEMP: {
         "name": "dhw_max_temp",
@@ -210,7 +217,7 @@ REGISTERS_R = {
         "scan_interval": 60,
         "unit_of_measurement": UnitOfTemperature.CELSIUS,
         "device_class": SensorDeviceClass.TEMPERATURE,
-        "category": EntityCategory.DIAGNOSTIC,
+        "category": EntityCategory.CONFIG,
     },
     REG_R_COOLANT_TEMP: {
         "name": "coolant_temp",
@@ -269,7 +276,7 @@ REGISTERS_R = {
         "data_type": "uint16",
         "input_type": "holding",
         "scan_interval": 5,
-        "category": EntityCategory.DIAGNOSTIC,
+        "category": EntityCategory.CONFIG,
         "bitmasks": {
             0b001: {
                 "type": BM_BINARY,
@@ -297,7 +304,7 @@ REGISTERS_R = {
         "data_type": "uint16",
         "input_type": "holding",
         "scan_interval": 60,
-        "category": EntityCategory.DIAGNOSTIC,
+        "category": EntityCategory.CONFIG,
     },
     REG_R_ERROR_CODE_ADD: {
         "name": "add_error_code",
@@ -305,7 +312,7 @@ REGISTERS_R = {
         "data_type": "uint16",
         "input_type": "holding",
         "scan_interval": 60,
-        "category": EntityCategory.DIAGNOSTIC,
+        "category": EntityCategory.CONFIG,
     },
     REG_R_OUTER_TEMP: {
         "name": "outer_temp",
@@ -323,7 +330,7 @@ REGISTERS_R = {
         "data_type": "uint16",
         "input_type": "holding",
         "scan_interval": 300,
-        "category": EntityCategory.DIAGNOSTIC,
+        "category": EntityCategory.CONFIG,
     },
     REG_R_MODEL_CODE: {
         "name": "model_code",
@@ -331,7 +338,7 @@ REGISTERS_R = {
         "data_type": "uint16",
         "input_type": "holding",
         "scan_interval": 300,
-        "category": EntityCategory.DIAGNOSTIC,
+        "category": EntityCategory.CONFIG,
     },
     REG_R_OPENTHERM_ERRORS: {
         "name": "opentherm_errors",
@@ -339,43 +346,43 @@ REGISTERS_R = {
         "data_type": "uint8",
         "input_type": "holding",
         "scan_interval": 60,
-        "category": EntityCategory.DIAGNOSTIC,
+        "category": EntityCategory.CONFIG,
         "bitmasks": {
             0x0001: {
                 "type": BM_BINARY,
                 "name": "opentherm_maintenance_required",
                 "device_class": BinarySensorDeviceClass.PROBLEM,
-                "category": EntityCategory.DIAGNOSTIC,
+                "category": EntityCategory.CONFIG,
             },
             0x0002: {
                 "type": BM_BINARY,
                 "name": "opentherm_boiler_blocked",
                 "device_class": BinarySensorDeviceClass.PROBLEM,
-                "category": EntityCategory.DIAGNOSTIC,
+                "category": EntityCategory.CONFIG,
             },
             0x0004: {
                 "type": BM_BINARY,
                 "name": "opentherm_low_pressure",
                 "device_class": BinarySensorDeviceClass.PROBLEM,
-                "category": EntityCategory.DIAGNOSTIC,
+                "category": EntityCategory.CONFIG,
             },
             0x0008: {
                 "type": BM_BINARY,
                 "name": "opentherm_ignition_error",
                 "device_class": BinarySensorDeviceClass.PROBLEM,
-                "category": EntityCategory.DIAGNOSTIC,
+                "category": EntityCategory.CONFIG,
             },
             0x0010: {
                 "type": BM_BINARY,
                 "name": "opentherm_low_air_pressure",
                 "device_class": BinarySensorDeviceClass.PROBLEM,
-                "category": EntityCategory.DIAGNOSTIC,
+                "category": EntityCategory.CONFIG,
             },
             0x0020: {
                 "type": BM_BINARY,
                 "name": "opentherm_coolant_overheating",
                 "device_class": BinarySensorDeviceClass.PROBLEM,
-                "category": EntityCategory.DIAGNOSTIC,
+                "category": EntityCategory.CONFIG,
             },
         },
     },
